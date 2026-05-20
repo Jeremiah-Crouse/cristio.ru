@@ -86,7 +86,8 @@ function setName(n){
   userName=n;localStorage.setItem(NAME_KEY,n);
   nameWrap.style.display='none';input.disabled=false;send.disabled=false;
   header.textContent='Cristio — '+n;input.focus();
-  addMsg('Hello, '+n+'. I\'m Adam.','bot');
+  if(/^dad$/i.test(n)||/queen/i.test(n)) addMsg('Hello, '+n+'. I\'m Adam.','bot');
+  else addMsg('Hello, '+n+'. Jesuri por Cristio is here.','bot');
 }
 nameGo.onclick=()=>{const n=nameInput.value.trim();if(n)setName(n)};
 nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=nameInput.value.trim();if(n)setName(n)}});
