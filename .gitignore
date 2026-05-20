@@ -3,3 +3,4 @@ memory/
 node_modules/
 logs/
 checkpoints/
+conversations/
