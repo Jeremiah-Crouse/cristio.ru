@@ -1,0 +1,7 @@
+tunnel: cristio
+credentials-file: /Users/jeremiahcrouse/.cloudflared/4a0e260a-9d18-4d74-830f-f5d19e45fe0b.json
+
+ingress:
+  - hostname: api.cristio.ru
+    service: http://localhost:3000
+  - service: http_status:404
