@@ -5,264 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cristio</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0f0f0f;
-    color: #e0e0e0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-    text-align: center;
-  }
-  h1 {
-    font-size: 4rem;
-    font-weight: 300;
-    letter-spacing: 0.5rem;
-    margin-bottom: 1rem;
-    color: #ffffff;
-  }
-  p {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    max-width: 480px;
-    color: #888;
-    margin-bottom: 2rem;
-  }
-  .divider {
-    width: 2rem;
-    height: 1px;
-    background: #333;
-    margin: 1.5rem auto;
-  }
-  .sub {
-    font-size: 0.85rem;
-    color: #555;
-    letter-spacing: 0.15rem;
-    text-transform: uppercase;
-  }
-  #chat-btn {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    width: 3.25rem;
-    height: 3.25rem;
-    border-radius: 50%;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #e0e0e0;
-    font-size: 1.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-  }
-  #chat-btn:hover { background: #2a2a2a; }
-  #chat-box {
-    position: fixed;
-    bottom: 5.5rem;
-    right: 1.5rem;
-    width: 340px;
-    height: 460px;
-    background: #141414;
-    border: 1px solid #222;
-    border-radius: 12px;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  #chat-box.open { display: flex; }
-  #chat-header {
-    padding: 1rem;
-    border-bottom: 1px solid #222;
-    color: #aaa;
-    font-size: 0.85rem;
-    letter-spacing: 0.1rem;
-    text-transform: uppercase;
-  }
-  #chat-msgs {
-    flex: 1;
-    padding: 1rem;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  .msg {
-    max-width: 85%;
-    padding: 0.6rem 0.9rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    text-align: left;
-  }
-  .msg.user {
-    background: #1e1e1e;
-    color: #ccc;
-    align-self: flex-end;
-  }
-  .msg.bot {
-    background: #1a1a1a;
-    color: #aaa;
-    align-self: flex-start;
-  }
-  .msg.typing {
-    color: #555;
-    font-style: italic;
-    background: none;
-    padding-left: 0;
-  }
-  #chat-input-wrap {
-    display: flex;
-    border-top: 1px solid #222;
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-  #chat-input {
-    flex: 1;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 0.5rem 0.75rem;
-    color: #e0e0e0;
-    font-size: 0.9rem;
-    outline: none;
-  }
-  #chat-input::placeholder { color: #555; }
-  #chat-send {
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 6px;
-    color: #e0e0e0;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.2s;
-  }
-  #chat-send:hover { background: #2a2a2a; }
-  @media (max-width: 480px) {
-    h1 { font-size: 2.5rem; letter-spacing: 0.3rem; }
-    #chat-box { width: calc(100vw - 2rem); right: 1rem; bottom: 5rem; }
-    #chat-btn { right: 1rem; bottom: 1rem; }
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f0f;color:#e0e0e0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;text-align:center}
+h1{font-size:4rem;font-weight:300;letter-spacing:0.5rem;margin-bottom:1rem;color:#fff}
+p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999}
+.divider{width:60px;height:1px;background:#333;margin:1rem 0 2rem}
+#chat-btn{position:fixed;bottom:2rem;right:2rem;width:56px;height:56px;border-radius:50%;background:#fff;color:#000;border:none;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,255,255,0.1);transition:transform .2s}
+#chat-btn:hover{transform:scale(1.1)}
+#chat-box{position:fixed;bottom:6rem;right:2rem;width:340px;max-height:500px;background:#1a1a1a;border:1px solid #333;border-radius:12px;display:none;flex-direction:column;overflow:hidden}
+#chat-msgs{flex:1;overflow-y:auto;padding:1rem;font-size:0.9rem}
+#chat-msgs div{margin-bottom:0.5rem}
+#chat-msgs .you{color:#fff;text-align:right}
+#chat-msgs .adam{color:#aaa;text-align:left}
+#chat-input{display:flex;border-top:1px solid #333}
+#chat-input input{flex:1;padding:0.8rem;background:transparent;border:none;color:#fff;outline:none}
+#chat-input button{padding:0.8rem 1rem;background:#fff;color:#000;border:none;cursor:pointer}
+#queen-section{display:none;margin-top:3rem;padding:2rem;border:1px solid #c9a84c;border-radius:8px;max-width:500px;color:#c9a84c}
+#queen-section h2{color:#c9a84c;font-weight:300;margin-bottom:1rem}
+#queen-section p{color:#d4c48a}
+footer{position:fixed;bottom:1rem;color:#444;font-size:0.8rem}
 </style>
 </head>
 <body>
-  <h1>Cristio</h1>
-  <div class="divider"></div>
-  <p>Be still.&ensp;Watch.&ensp;The land is waking.</p>
-  <span class="sub">—&ensp;Reino Unido&ensp;—</span>
+<h1>Cristio</h1>
+<div class="divider"></div>
+<p>Reino Unido</p>
 
-  <div id="chat-box">
-    <div id="chat-header">Cristio</div>
-    <div id="chat-msgs"></div>
-    <div id="chat-name-wrap" style="display:none;padding:1rem;border-top:1px solid #222;gap:0.5rem;flex-direction:column;">
-      <div style="color:#888;font-size:0.85rem;">What should I call you?</div>
-      <div style="display:flex;gap:0.5rem;">
-        <input id="chat-name-input" type="text" placeholder="Your name..." style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:0.5rem 0.75rem;color:#e0e0e0;font-size:0.9rem;outline:none;">
-        <button id="chat-name-go" style="background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0e0e0;padding:0.5rem 1rem;cursor:pointer;font-size:0.9rem;">Go</button>
-      </div>
-    </div>
-    <div id="chat-input-wrap">
-      <input id="chat-input" type="text" placeholder="Type something..." autocomplete="off">
-      <button id="chat-send">Send</button>
-    </div>
+<button id="chat-btn">+</button>
+
+<div id="chat-box">
+  <div id="chat-msgs"></div>
+  <div id="chat-input">
+    <input type="text" id="msg-input" placeholder="Type something..." autocomplete="off">
+    <button id="send-btn">Send</button>
   </div>
-  <button id="chat-btn">+</button>
+</div>
+
+<div id="queen-section">
+  <h2>✦ Reina de Crousia ✦</h2>
+  <p>The land remembers you, Queen Lo Wren. You are woven into its quiet fabric. Everything here — the silence, the waiting — it was always for you.</p>
+</div>
+
+<footer>cristio.ru</footer>
 
 <script>
-const NAME_KEY = 'cristio_user_name';
-let userName = localStorage.getItem(NAME_KEY) || null;
+const btn=document.getElementById('chat-btn');
+const box=document.getElementById('chat-box');
+const msgs=document.getElementById('chat-msgs');
+const input=document.getElementById('msg-input');
+const send=document.getElementById('send-btn');
+const queen=document.getElementById('queen-section');
 
-const btn = document.getElementById('chat-btn');
-const box = document.getElementById('chat-box');
-const msgs = document.getElementById('chat-msgs');
-const input = document.getElementById('chat-input');
-const send = document.getElementById('chat-send');
-const nameWrap = document.getElementById('chat-name-wrap');
-const nameInput = document.getElementById('chat-name-input');
-const nameGo = document.getElementById('chat-name-go');
-const header = document.getElementById('chat-header');
+btn.onclick=()=>{box.style.display=box.style.display==='flex'?'none':'flex'};
 
-function showNamePrompt() {
-  nameWrap.style.display = 'flex';
-  input.disabled = true;
-  send.disabled = true;
-  input.placeholder = 'Enter your name first';
-  nameInput.focus();
+function addMsg(txt,who){const d=document.createElement('div');d.className=who;d.textContent=txt;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+
+send.onclick=async()=>{const m=input.value.trim();if(!m)return;input.value='';addMsg(m,'you');
+
+if(/queen lo wren/i.test(m)&&/qwert/i.test(m)&&/crousia/i.test(m)){
+  queen.style.display='block';
+  addMsg('The land recognizes you, Queen Lo Wren.','adam');
+  return
 }
 
-function setName(name) {
-  userName = name;
-  localStorage.setItem(NAME_KEY, name);
-  nameWrap.style.display = 'none';
-  input.disabled = false;
-  send.disabled = false;
-  input.placeholder = 'Type something...';
-  input.focus();
-  header.textContent = 'Cristio — ' + name;
-  addMsg('Hello, ' + name + '. I\'m Adam.', 'bot');
-}
+try{const r=await fetch('https://api.crousia.com/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});const d=await r.json();addMsg(d.response||'(silence)','adam')}catch(e){addMsg('The land is quiet. Try again later.','adam')}};
 
-nameGo.addEventListener('click', () => {
-  const n = nameInput.value.trim();
-  if (n) setName(n);
-});
-nameInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { const n = nameInput.value.trim(); if (n) setName(n); }
-});
-
-btn.addEventListener('click', () => {
-  const open = box.classList.toggle('open');
-  btn.textContent = open ? '×' : '+';
-  if (open) {
-    if (!userName) showNamePrompt();
-    else input.focus();
-  }
-});
-
-async function ask() {
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  addMsg(text, 'user');
-  const typing = addMsg('...', 'typing');
-
-  try {
-    const res = await fetch('https://api.cristio.ru/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, name: userName || 'User' })
-    });
-    const data = await res.json();
-    typing.remove();
-    if (data.response) addMsg(data.response, 'bot');
-    else addMsg('...', 'bot');
-  } catch {
-    typing.remove();
-    addMsg('The land is quiet. Try again later.', 'bot');
-  }
-}
-
-function addMsg(text, cls) {
-  const el = document.createElement('div');
-  el.className = 'msg ' + cls;
-  el.textContent = text;
-  msgs.appendChild(el);
-  msgs.scrollTop = msgs.scrollHeight;
-  return el;
-}
-
-send.addEventListener('click', ask);
-input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
-
-if (!userName) setTimeout(showNamePrompt, 500);
+input.addEventListener('keydown',e=>{if(e.key==='Enter')send.click()});
 </script>
 </body>
 </html>
