@@ -132,9 +132,7 @@ function extractReply(ep,data){
 }
 
 const ENDPOINTS=[
-  {name:'0000',url:'https://alphacoin.uk/api/chat'},
-  {name:'Adam',url:'https://api.cristio.ru/api/chat'},
-  {name:'Eve',url:'https://crousia.com/api/eve/message',format:'eve'}
+  {name:'0000',url:'https://alphacoin.uk/api/chat'}
 ];
 
 async function tryEndpoint(idx,message,user){
@@ -144,8 +142,7 @@ async function tryEndpoint(idx,message,user){
     setTimeout(emailFallback,1000);
     return;
   }
-  const ep=ENDPOINTS[idx  {name:'Eve',url:'https://crousia.com/api/eve/message',format:'eve'}
-];
+  const ep=ENDPOINTS[idx];
   try{
     const r=await Promise.race([
       fetch(ep.url,{method:'POST',headers:{'Content-Type':'application/json'},body:buildBody(ep,message,user)}),
