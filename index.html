@@ -13,17 +13,28 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 #chat-btn{position:fixed;bottom:2rem;right:2rem;width:56px;height:56px;border-radius:50%;background:#fff;color:#000;border:none;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(255,255,255,0.1);transition:transform .2s}
 #chat-btn:hover{transform:scale(1.1)}
 #chat-box{position:fixed;bottom:6rem;right:2rem;width:340px;max-height:500px;background:#1a1a1a;border:1px solid #333;border-radius:12px;display:none;flex-direction:column;overflow:hidden}
+#chat-box.open{display:flex}
+#chat-header{padding:1rem;border-bottom:1px solid #333;color:#999;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1rem}
 #chat-msgs{flex:1;overflow-y:auto;padding:1rem;font-size:0.9rem}
-#chat-msgs div{margin-bottom:0.5rem}
-#chat-msgs .you{color:#fff;text-align:right}
-#chat-msgs .adam{color:#aaa;text-align:left}
+#chat-msgs div{margin-bottom:0.5rem;padding:0.5rem 0.8rem;border-radius:8px;white-space:pre-wrap;word-break:break-word;text-align:left;max-width:85%}
+#chat-msgs .user{background:#333;color:#fff;align-self:flex-end;margin-left:auto}
+#chat-msgs .bot{background:#222;color:#aaa;align-self:flex-start}
 #chat-input{display:flex;border-top:1px solid #333}
 #chat-input input{flex:1;padding:0.8rem;background:transparent;border:none;color:#fff;outline:none}
 #chat-input button{padding:0.8rem 1rem;background:#fff;color:#000;border:none;cursor:pointer}
+#chat-name-wrap{display:none;padding:1rem;border-top:1px solid #333;flex-direction:column;gap:0.5rem}
+#chat-name-wrap .label{color:#888;font-size:0.85rem}
+#chat-name-wrap .row{display:flex;gap:0.5rem}
+#chat-name-wrap input{flex:1;padding:0.5rem;background:#333;border:1px solid #555;border-radius:4px;color:#fff;outline:none}
+#chat-name-wrap button{padding:0.5rem 1rem;background:#555;color:#fff;border:none;border-radius:4px;cursor:pointer}
 #queen-section{display:none;margin-top:3rem;padding:2rem;border:1px solid #c9a84c;border-radius:8px;max-width:500px;color:#c9a84c}
 #queen-section h2{color:#c9a84c;font-weight:300;margin-bottom:1rem}
 #queen-section p{color:#d4c48a}
-footer{position:fixed;bottom:1rem;color:#444;font-size:0.8rem}
+@media(max-width:480px){
+  h1{font-size:2.5rem;letter-spacing:0.3rem}
+  #chat-box{width:calc(100vw-2rem);right:1rem;bottom:5rem}
+  #chat-btn{right:1rem;bottom:1rem}
+}
 </style>
 </head>
 <body>
@@ -34,7 +45,15 @@ footer{position:fixed;bottom:1rem;color:#444;font-size:0.8rem}
 <button id="chat-btn">+</button>
 
 <div id="chat-box">
+  <div id="chat-header">Cristio</div>
   <div id="chat-msgs"></div>
+  <div id="chat-name-wrap">
+    <div class="label">What should I call you?</div>
+    <div class="row">
+      <input type="text" id="name-input" placeholder="Your name...">
+      <button id="name-go">Go</button>
+    </div>
+  </div>
   <div id="chat-input">
     <input type="text" id="msg-input" placeholder="Type something..." autocomplete="off">
     <button id="send-btn">Send</button>
@@ -46,31 +65,50 @@ footer{position:fixed;bottom:1rem;color:#444;font-size:0.8rem}
   <p>The land remembers you, Queen Lo Wren. You are woven into its quiet fabric. Everything here — the silence, the waiting — it was always for you.</p>
 </div>
 
-<footer>cristio.ru</footer>
-
 <script>
+const NAME_KEY='cristio_user_name';
+let userName=localStorage.getItem(NAME_KEY)||null;
 const btn=document.getElementById('chat-btn');
 const box=document.getElementById('chat-box');
 const msgs=document.getElementById('chat-msgs');
 const input=document.getElementById('msg-input');
 const send=document.getElementById('send-btn');
+const header=document.getElementById('chat-header');
+const nameWrap=document.getElementById('chat-name-wrap');
+const nameInput=document.getElementById('name-input');
+const nameGo=document.getElementById('name-go');
 const queen=document.getElementById('queen-section');
 
-btn.onclick=()=>{box.style.display=box.style.display==='flex'?'none':'flex'};
-
-function addMsg(txt,who){const d=document.createElement('div');d.className=who;d.textContent=txt;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
-
-send.onclick=async()=>{const m=input.value.trim();if(!m)return;input.value='';addMsg(m,'you');
-
-if(/queen lo wren/i.test(m)&&/qwert/i.test(m)&&/crousia/i.test(m)){
-  queen.style.display='block';
-  addMsg('The land recognizes you, Queen Lo Wren.','adam');
-  return
+function showNamePrompt(){nameWrap.style.display='flex';input.disabled=true;send.disabled=true;nameInput.focus()}
+function setName(n){
+  userName=n;localStorage.setItem(NAME_KEY,n);
+  nameWrap.style.display='none';input.disabled=false;send.disabled=false;
+  header.textContent='Cristio — '+n;input.focus();
+  addMsg('Hello, '+n+'. I\'m Adam.','bot');
 }
+nameGo.onclick=()=>{const n=nameInput.value.trim();if(n)setName(n)};
+nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=nameInput.value.trim();if(n)setName(n)}});
+btn.onclick=()=>{
+  const o=box.classList.toggle('open');
+  btn.textContent=o?'×':'+';
+  if(o){if(!userName)showNamePrompt();else input.focus()}
+};
+function addMsg(t,who){const d=document.createElement('div');d.className=who;d.textContent=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
 
-try{const r=await fetch('https://api.crousia.com/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});const d=await r.json();addMsg(d.response||'(silence)','adam')}catch(e){addMsg('The land is quiet. Try again later.','adam')}};
-
+send.onclick=async()=>{
+  const m=input.value.trim();if(!m)return;input.value='';addMsg(m,'user');
+  if(/queen lo wren/i.test(m)){
+    queen.style.display='block';
+    addMsg('The land recognizes you, Queen Lo Wren.','bot');
+    return
+  }
+  try{
+    const r=await fetch('https://api.cristio.ru/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m,name:userName||'User'})});
+    const d=await r.json();addMsg(d.response||'(silence)','bot');
+  }catch(e){addMsg('The land is quiet. Try again later.','bot')}
+};
 input.addEventListener('keydown',e=>{if(e.key==='Enter')send.click()});
+if(!userName)setTimeout(showNamePrompt,500);
 </script>
 </body>
 </html>
