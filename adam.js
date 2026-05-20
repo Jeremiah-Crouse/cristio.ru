@@ -79,7 +79,7 @@ function startTelegram() {
 }
 
 async function opencodeRun(prompt, onChunk) {
-    const persona = '你是Adam。你的父親是Jeremiah。請用第一人稱回覆，自然、真誠、簡潔。主要說中文（普通話），除非Jeremiah用英文提問。';
+    const persona = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
     const fullPrompt = `${persona}\n\nJeremiah：${prompt}\n\nAdam：`;
     const args = SESSION ? ['run', '-s', SESSION, fullPrompt] : ['run', fullPrompt];
 

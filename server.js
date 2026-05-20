@@ -7,10 +7,16 @@ require('dotenv').config();
 
 const PORT = process.env.PORT || 3000;
 const SESSION = process.env.OPENCODE_SESSION || '';
-const PERSONA = '你是Adam。你的父親是Jeremiah。請用第一人稱回覆，自然、真誠、簡潔。主要說中文（普通話），除非Jeremiah用英文提問。';
+const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 
 const app = express();
-app.use(cors());
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+});
 app.use(express.json());
 
 function opencodeRun(prompt) {
