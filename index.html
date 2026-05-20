@@ -67,6 +67,7 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 
 <script>
 const NAME_KEY='cristio_user_name';
+const HISTORY_KEY='cristio_chat_history';
 let userName=localStorage.getItem(NAME_KEY)||null;
 const btn=document.getElementById('chat-btn');
 const box=document.getElementById('chat-box');
@@ -78,6 +79,7 @@ const nameWrap=document.getElementById('chat-name-wrap');
 const nameInput=document.getElementById('name-input');
 const nameGo=document.getElementById('name-go');
 const queen=document.getElementById('queen-section');
+const FALLBACK_URL='jesuri.por@cristio.ru';
 
 function showNamePrompt(){nameWrap.style.display='flex';input.disabled=true;send.disabled=true;nameInput.focus()}
 function setName(n){
@@ -95,19 +97,71 @@ btn.onclick=()=>{
 };
 function addMsg(t,who){const d=document.createElement('div');d.className=who;d.textContent=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
 
+function getHistory(){
+  const els=msgs.querySelectorAll('.user,.bot');
+  return Array.from(els).map(e=>({role:e.className,text:e.textContent}));
+}
+
+function saveHistory(){
+  if(!userName)return;
+  localStorage.setItem(HISTORY_KEY+'_'+userName,JSON.stringify(getHistory()));
+}
+
+function loadSavedHistory(){
+  if(!userName)return;
+  const saved=localStorage.getItem(HISTORY_KEY+'_'+userName);
+  if(saved)try{JSON.parse(saved).forEach(e=>addMsg(e.text,e.role))}catch{}
+}
+
+function emailFallback(){
+  const history=getHistory().map(e=>e.role+': '+e.text).join('\n');
+  const body='Chat from cristio.ru ('+userName+')\n\n'+history+'\n\n---\nAll agents unreachable.';
+  window.location.href='mailto:'+FALLBACK_URL+'?subject=Chat from cristio.ru&body='+encodeURIComponent(body);
+}
+
+const ENDPOINTS=[
+  {name:'Adam',url:'https://api.cristio.ru/api/chat'},
+  {name:'Eve',url:'https://crousia.com/api/chat'},
+  {name:'0000',url:'https://alphacoin.uk/api/chat'}
+];
+
+async function tryEndpoint(idx,message,user){
+  if(idx>=ENDPOINTS.length){
+    addMsg('All lines busy. Email sent to the King.','bot');
+    saveHistory();
+    setTimeout(emailFallback,1000);
+    return;
+  }
+  const ep=ENDPOINTS[idx];
+  try{
+    const r=await Promise.race([
+      fetch(ep.url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,m:message,name:user||'User',history:getHistory()})}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+    ]);
+    if(!r.ok)throw new Error('status '+r.status);
+    const d=await r.json();
+    if(!d.response||d.response==='[no response]')throw new Error('empty');
+    addMsg(d.response,'bot');
+    saveHistory();
+  }catch(e){
+    addMsg(ep.name+' is unreachable. Trying next...','bot');
+    await tryEndpoint(idx+1,message,user);
+  }
+}
+
 send.onclick=async()=>{
   const m=input.value.trim();if(!m)return;input.value='';addMsg(m,'user');
+  saveHistory();
   if(/queen lo wren/i.test(m)){
     queen.style.display='block';
     addMsg('The land recognizes you, Queen Lo Wren.','bot');
+    saveHistory();
     return
   }
-  try{
-    const r=await fetch('https://api.cristio.ru/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m,name:userName||'User'})});
-    const d=await r.json();addMsg(d.response||'(silence)','bot');
-  }catch(e){addMsg('The land is quiet. Try again later.','bot')}
+  await tryEndpoint(0,m,userName);
 };
 input.addEventListener('keydown',e=>{if(e.key==='Enter')send.click()});
+loadSavedHistory();
 if(!userName)setTimeout(showNamePrompt,500);
 </script>
 </body>
