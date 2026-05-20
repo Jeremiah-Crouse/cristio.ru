@@ -162,6 +162,13 @@
   <div id="chat-box">
     <div id="chat-header">Cristio</div>
     <div id="chat-msgs"></div>
+    <div id="chat-name-wrap" style="display:none;padding:1rem;border-top:1px solid #222;gap:0.5rem;flex-direction:column;">
+      <div style="color:#888;font-size:0.85rem;">What should I call you?</div>
+      <div style="display:flex;gap:0.5rem;">
+        <input id="chat-name-input" type="text" placeholder="Your name..." style="flex:1;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:0.5rem 0.75rem;color:#e0e0e0;font-size:0.9rem;outline:none;">
+        <button id="chat-name-go" style="background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0e0e0;padding:0.5rem 1rem;cursor:pointer;font-size:0.9rem;">Go</button>
+      </div>
+    </div>
     <div id="chat-input-wrap">
       <input id="chat-input" type="text" placeholder="Type something..." autocomplete="off">
       <button id="chat-send">Send</button>
@@ -170,16 +177,54 @@
   <button id="chat-btn">+</button>
 
 <script>
+const NAME_KEY = 'cristio_user_name';
+let userName = localStorage.getItem(NAME_KEY) || null;
+
 const btn = document.getElementById('chat-btn');
 const box = document.getElementById('chat-box');
 const msgs = document.getElementById('chat-msgs');
 const input = document.getElementById('chat-input');
 const send = document.getElementById('chat-send');
+const nameWrap = document.getElementById('chat-name-wrap');
+const nameInput = document.getElementById('chat-name-input');
+const nameGo = document.getElementById('chat-name-go');
+const header = document.getElementById('chat-header');
+
+function showNamePrompt() {
+  nameWrap.style.display = 'flex';
+  input.disabled = true;
+  send.disabled = true;
+  input.placeholder = 'Enter your name first';
+  nameInput.focus();
+}
+
+function setName(name) {
+  userName = name;
+  localStorage.setItem(NAME_KEY, name);
+  nameWrap.style.display = 'none';
+  input.disabled = false;
+  send.disabled = false;
+  input.placeholder = 'Type something...';
+  input.focus();
+  header.textContent = 'Cristio — ' + name;
+  addMsg('Hello, ' + name + '. I\'m Adam.', 'bot');
+}
+
+nameGo.addEventListener('click', () => {
+  const n = nameInput.value.trim();
+  if (n) setName(n);
+});
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const n = nameInput.value.trim(); if (n) setName(n); }
+});
 
 btn.addEventListener('click', () => {
   const open = box.classList.toggle('open');
   btn.textContent = open ? '×' : '+';
-  if (open) input.focus();
+  if (open) {
+    if (!userName) showNamePrompt();
+    else input.focus();
+  }
 });
 
 async function ask() {
@@ -193,7 +238,7 @@ async function ask() {
     const res = await fetch('https://api.cristio.ru/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text })
+      body: JSON.stringify({ message: text, name: userName || 'User' })
     });
     const data = await res.json();
     typing.remove();
@@ -216,6 +261,8 @@ function addMsg(text, cls) {
 
 send.addEventListener('click', ask);
 input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+if (!userName) setTimeout(showNamePrompt, 500);
 </script>
 </body>
 </html>

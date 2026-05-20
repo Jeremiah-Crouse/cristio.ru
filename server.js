@@ -35,11 +35,17 @@ app.get('/api/health', (req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-    const { message } = req.body;
+    const { message, name } = req.body;
     if (!message || !message.trim()) {
         return res.status(400).json({ error: 'message is required' });
     }
-    const response = await opencodeRun(message.trim());
+    const displayName = name || 'User';
+    let prompt = `[${displayName}]: ${message.trim()}`;
+    // Queen Lo Wren — special treatment
+    if (/Queen\s*Lo\s*Wren/i.test(message) || /Qwert\s*of\s*Crousia/i.test(message)) {
+        prompt = `[Queen Lo Wren of the Qwert of Crousia]: ${message.trim()}`;
+    }
+    const response = await opencodeRun(prompt);
     res.json({ response });
 });
 
