@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const express = require('express');
-const http = require('http');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -17,21 +17,19 @@ function userKey(name) {
   return name.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase().slice(0, 64);
 }
 
-function apiPost(pathname, body) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const req = http.request({
-      hostname: 'localhost', port: 4096,
-      path: pathname, method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
-    }, (res) => {
-      let buf = '';
-      res.on('data', d => buf += d);
-      res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(null); } });
+function opencodeRun(prompt) {
+  return new Promise((resolve) => {
+    const fullPrompt = `${PERSONA}\n\n${prompt}\n\nAdam：`;
+    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
+    const proc = spawn('opencode', args, {
+      cwd: path.join(process.env.HOME, '.adam'),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env }
     });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
+    let out = '';
+    proc.stdout.on('data', c => out += c.toString());
+    proc.on('close', () => resolve(out.trim() || '[no response]'));
+    proc.on('error', () => resolve('[connection error]'));
   });
 }
 
@@ -64,16 +62,30 @@ app.post('/api/chat', async (req, res) => {
 
   const displayName = name || 'User';
   const speaker = /Queen\s*Lo\s*Wren/i.test(displayName) ? 'Queen Lo Wren of the Qwert of Crousia' : displayName;
-  const fullPrompt = `${PERSONA}\n\n[${speaker}]: ${message.trim()}\n\nAdam：`;
+  const prompt = `[${speaker}]: ${message.trim()}`;
 
   try {
-    const result = await apiPost(`/session/${SESSION}/message`, {
-      model: { providerID: 'opencode-go', modelID: 'deepseek-v4-flash' },
-      parts: [{ type: 'text', text: fullPrompt }]
-    });
-
-    const reasoning = (result?.parts?.find(p => p.type === 'reasoning')?.text || '').trim();
-    const response = (result?.parts?.find(p => p.type === 'text')?.text || '').trim() || '[no response]';
+    const raw = await opencodeRun(prompt);
+    const lines = raw.split('\n');
+    let reasoning = '';
+    let response = '';
+    let inThinking = false;
+    let passedEol = false;
+    for (const line of lines) {
+      if (line.startsWith('Thinking: ')) {
+        inThinking = true;
+        passedEol = false;
+        reasoning += line.slice(10) + '\n';
+      } else if (inThinking && line.trim() && !passedEol) {
+        reasoning += line + '\n';
+      } else if (inThinking && !line.trim()) {
+        passedEol = true;
+      } else if (line.trim()) {
+        response += line + '\n';
+      }
+    }
+    reasoning = reasoning.trim();
+    response = response.trim() || '[no response]';
 
     const history = loadHistory(speaker);
     history.push({ user: message.trim(), bot: response });
@@ -81,7 +93,7 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ reasoning, response });
   } catch (e) {
-    console.error('API error:', e.message);
+    console.error('Error:', e.message);
     res.json({ reasoning: '', response: '[connection error]' });
   }
 });
