@@ -67,6 +67,8 @@ async function handleInput(input, source = 'terminal') {
   let sessId = SESSION;
   let messageSent = false;
   let streamEnded = false;
+  let sawReasoning = false;
+  let insertedSep = false;
 
   // Subscribe to SSE for live deltas
   function subscribeSSE() {
@@ -96,9 +98,14 @@ async function handleInput(input, source = 'terminal') {
               if (props.sessionID !== sessId) return;
               const ptype = partTypes.get(props.partID);
               if (ptype === 'reasoning') {
+                sawReasoning = true;
                 thinkingAccum += props.delta;
                 if (source === 'terminal') process.stdout.write('\x1b[31m' + props.delta + '\x1b[0m');
               } else if (ptype === 'text') {
+                if (sawReasoning && !insertedSep) {
+                  insertedSep = true;
+                  if (source === 'terminal') process.stdout.write('\n');
+                }
                 responseAccum += props.delta;
                 if (source === 'terminal') process.stdout.write('\x1b[34m' + props.delta + '\x1b[0m');
               }
