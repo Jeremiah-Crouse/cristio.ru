@@ -99,14 +99,19 @@ async function handleInput(input, source = 'terminal') {
     let thinkingText = '';
     let responseText = '';
 
+    let firstText = true;
     const response = await sendMessage(input,
         (text) => {
             thinkingText += text + '\n';
-            if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\x1b[0m');
+            if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\n\x1b[0m');
         },
         (text) => {
+            if (firstText && thinkingText) {
+                if (source === 'terminal') process.stdout.write('\n');
+                firstText = false;
+            }
             responseText += text;
-            if (source === 'terminal') process.stdout.write('\x1b[34m' + text + '\x1b[0m');
+            if (source === 'terminal') process.stdout.write('\x1b[34m' + text + '\n\x1b[0m');
         }
     );
 
