@@ -57,9 +57,9 @@ async function sendMessage(prompt, onReasoning, onText) {
     });
     for (const part of result.parts || []) {
         if (part.type === 'reasoning') {
-            onReasoning(part.text || '');
+            await onReasoning(part.text || '');
         } else if (part.type === 'text') {
-            onText(part.text || '');
+            await onText(part.text || '');
         }
     }
     return result.parts?.find(p => p.type === 'text')?.text || '[no response]';
@@ -87,6 +87,21 @@ async function ensureServer() {
     }
 }
 
+function streamProgressive(text, write, delay = 12) {
+    return new Promise(resolve => {
+        let i = 0;
+        function next() {
+            if (i >= text.length) { resolve(); return; }
+            const remain = text.length - i;
+            const size = remain < 2 ? remain : Math.min(2 + Math.floor(Math.random() * 3), remain);
+            write(text.slice(i, i + size));
+            i += size;
+            setTimeout(next, delay);
+        }
+        next();
+    });
+}
+
 async function handleInput(input, source = 'terminal') {
     if (input.includes('[RESTART]') || input.trim() === '[RESTART]') {
         console.log('\n🔄 [Adam restarting]...\n');
@@ -100,18 +115,24 @@ async function handleInput(input, source = 'terminal') {
     let responseText = '';
 
     let firstText = true;
-    const response = await sendMessage(input,
-        (text) => {
+    await sendMessage(input,
+        async (text) => {
             thinkingText += text + '\n';
-            if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\n\x1b[0m');
+            if (source === 'terminal') {
+                await streamProgressive(text, (t) => process.stdout.write('\x1b[31m' + t + '\x1b[0m'), 10);
+                process.stdout.write('\n');
+            }
         },
-        (text) => {
+        async (text) => {
             if (firstText && thinkingText) {
                 if (source === 'terminal') process.stdout.write('\n');
                 firstText = false;
             }
             responseText += text;
-            if (source === 'terminal') process.stdout.write('\x1b[34m' + text + '\n\x1b[0m');
+            if (source === 'terminal') {
+                await streamProgressive(text, (t) => process.stdout.write('\x1b[34m' + t + '\x1b[0m'), 8);
+                process.stdout.write('\n');
+            }
         }
     );
 
@@ -119,7 +140,7 @@ async function handleInput(input, source = 'terminal') {
         fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingText.trim()}\n\n`).catch(() => {});
     }
 
-    const finalResponse = responseText.trim() || response || '[no response]';
+    const finalResponse = responseText.trim() || '[no response]';
     const isSilent = /^(\.\.\.|…)$/s.test(finalResponse.trim());
 
     if (finalResponse.includes('[RESTART]') || finalResponse === '[RESTART]') {
