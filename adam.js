@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const HISTORY = path.join(process.env.HOME, '.adam', 'memory', 'full_history.log');
+const REASONING_LOG = path.join(process.env.HOME, '.adam', 'memory', 'reasoning.log');
 const SESSION = process.env.OPENCODE_SESSION || '';
 
 let currentChild = null;
@@ -29,7 +30,7 @@ async function log(entry) {
 async function opencodeRun(prompt, onChunk) {
     const persona = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
     const fullPrompt = `${persona}\n\nJeremiah：${prompt}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, fullPrompt] : ['run', fullPrompt];
+    const args = SESSION ? ['run', '-s', SESSION, '--format', 'json', fullPrompt] : ['run', '--format', 'json', fullPrompt];
 
     return new Promise((resolve) => {
         const proc = spawn('opencode', args, {
@@ -64,14 +65,43 @@ async function handleInput(input, source = 'terminal') {
     blocked = true;
     let responseAccum = '';
     let silenceDetected = false;
+    let inReasoning = false;
+    let reasoningAccum = '';
     const response = await opencodeRun(input, (chunk) => {
         responseAccum += chunk;
+        if (inReasoning) {
+            reasoningAccum += chunk;
+            if (source === 'terminal') {
+                if (chunk.startsWith('Thinking: ')) {
+                    process.stdout.write('\x1b[2m\x1b[33m' + chunk + '\x1b[0m');
+                } else {
+                    process.stdout.write('\x1b[2m\x1b[33m' + chunk + '\x1b[0m');
+                }
+            }
+            if (chunk.includes('\n\n') && !chunk.startsWith('Thinking:')) {
+                inReasoning = false;
+                reasoningAccum = '';
+            }
+            return;
+        }
+        if (chunk.startsWith('Thinking: ')) {
+            inReasoning = true;
+            reasoningAccum = chunk;
+            if (source === 'terminal') {
+                process.stdout.write('\x1b[2m\x1b[33m' + chunk + '\x1b[0m');
+            }
+            return;
+        }
         if (isSilentSignal(responseAccum)) {
             silenceDetected = true;
         }
         if (silenceDetected) return;
         if (source === 'terminal') process.stdout.write(chunk);
     });
+    if (reasoningAccum) {
+        const clean = reasoningAccum.replace(/^Thinking: /gm, '').trim();
+        if (clean) fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${clean}\n\n`).catch(() => {});
+    }
     blocked = false;
 
     if (interrupted) {
