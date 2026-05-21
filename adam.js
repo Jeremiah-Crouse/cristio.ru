@@ -30,7 +30,7 @@ async function log(entry) {
 async function opencodeRun(prompt, onChunk) {
     const persona = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
     const fullPrompt = `${persona}\n\nJeremiah：${prompt}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, '--format', 'json', fullPrompt] : ['run', '--format', 'json', fullPrompt];
+    const args = SESSION ? ['run', '-s', SESSION, '--format', 'json', '--thinking', fullPrompt] : ['run', '--format', 'json', '--thinking', fullPrompt];
 
     return new Promise((resolve) => {
         const proc = spawn('opencode', args, {
@@ -77,11 +77,11 @@ async function handleInput(input, source = 'terminal') {
                 if (ev.type === 'reasoning') {
                     const text = ev.part?.text || '';
                     reasoningAccum += text + '\n';
-                    if (source === 'terminal') process.stdout.write('\x1b[2m\x1b[33m' + text + '\x1b[0m');
+                    if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\n\x1b[0m');
                 } else if (ev.type === 'text') {
                     const text = ev.part?.text || '';
                     responseAccum += text;
-                    if (source === 'terminal') process.stdout.write(text);
+                    if (source === 'terminal') process.stdout.write('\x1b[34m' + text + '\n\x1b[0m');
                 } else if (ev.type === 'step_start' || ev.type === 'step_finish') {
                     // ignore scaffolding events
                 } else if (ev.type === 'error') {
