@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
+const http = require('http');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -9,107 +10,162 @@ dotenv.config();
 const HISTORY = path.join(process.env.HOME, '.adam', 'memory', 'full_history.log');
 const REASONING_LOG = path.join(process.env.HOME, '.adam', 'memory', 'reasoning.log');
 const SESSION = process.env.OPENCODE_SESSION || '';
+const API = { host: 'localhost', port: 4096 };
 const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 
 let rl = null;
 
+function api(method, pathname, body) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : '';
+    const opts = { hostname: API.host, port: API.port, path: pathname, method,
+      headers: { 'Content-Type': 'application/json' } };
+    if (data) opts.headers['Content-Length'] = Buffer.byteLength(data);
+    const req = http.request(opts, (res) => {
+      let buf = '';
+      res.on('data', d => buf += d);
+      res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(buf); } });
+    });
+    req.on('error', reject);
+    if (data) req.write(data);
+    req.end();
+  });
+}
+
+async function ensureServe() {
+  try {
+    await api('GET', '/session');
+  } catch {
+    console.log('🔄 Starting server...');
+    spawn('opencode', ['serve', '--port', '4096'], { stdio: 'ignore', detached: true, env: { ...process.env } }).unref();
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      try { await api('GET', '/session'); console.log('✅ Server ready'); return; } catch {}
+    }
+    console.error('❌ Server failed'); process.exit(1);
+  }
+  console.log('✅ Server already running');
+}
+
 async function log(entry) {
-    await fs.appendFile(HISTORY, `[${new Date().toISOString()}] ${entry}\n`).catch(() => {});
+  await fs.appendFile(HISTORY, `[${new Date().toISOString()}] ${entry}\n`).catch(() => {});
 }
 
 async function handleInput(input, source = 'terminal') {
-    if (input.includes('[RESTART]') || input.trim() === '[RESTART]') {
-        console.log('\n🔄 [Adam restarting]...\n');
-        await log('[Adam restarted by user]').catch(() => {});
-        process.exit(42);
-    }
+  if (input.includes('[RESTART]') || input.trim() === '[RESTART]') {
+    console.log('\n🔄 [Adam restarting]...\n');
+    await log('[Adam restarted by user]').catch(() => {});
+    process.exit(42);
+  }
 
-    if (source === 'terminal') console.log();
+  if (source === 'terminal') console.log();
 
-    const fullPrompt = `${PERSONA}\n\nJeremiah：${input}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
-    let raw = '';
-    let thinkingLog = '';
+  const fullPrompt = `${PERSONA}\n\nJeremiah：${input}\n\nAdam：`;
+  const partTypes = new Map();
+  let thinkingAccum = '';
+  let responseAccum = '';
+  let sessId = SESSION;
+  let messageSent = false;
+  let streamEnded = false;
 
-    const proc = spawn('opencode', args, {
-        cwd: process.env.HOME + '/.adam',
-        stdio: ['ignore', 'pipe', 'pipe'],
-        shell: false,
-        env: { ...process.env }
-    });
+  // Subscribe to SSE for live deltas
+  function subscribeSSE() {
+    http.get(`http://${API.host}:${API.port}/event`, (res) => {
+      let buf = '';
+      res.on('data', d => {
+        buf += d.toString();
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          try {
+            const ev = JSON.parse(line.slice(5));
+            if (streamEnded) return;
 
-    proc.stdout.on('data', c => {
-        const chunk = c.toString();
-        raw += chunk;
-        if (chunk.startsWith('Thinking:')) {
-            const text = chunk.replace('Thinking:', '').trim();
-            thinkingLog += text + '\n';
-            if (source === 'terminal') process.stdout.write('\x1b[31m' + chunk + '\x1b[0m');
-        } else if (chunk.includes('Thinking:')) {
-            const parts = chunk.split('Thinking:');
-            if (parts[0]) process.stdout.write('\x1b[34m' + parts[0] + '\x1b[0m');
-            if (parts[1]) {
-                process.stdout.write('\x1b[31m' + 'Thinking:' + parts[1] + '\x1b[0m');
-                const text = parts[1].trim();
-                if (text) thinkingLog += text + '\n';
+            // Track part types on creation
+            if (ev.type === 'message.part.updated') {
+              const p = ev.properties?.part;
+              if (p && !p.time?.end && (p.type === 'reasoning' || p.type === 'text')) {
+                partTypes.set(p.id, p.type);
+              }
             }
-        } else {
-            if (source === 'terminal') process.stdout.write('\x1b[34m' + chunk + '\x1b[0m');
+
+            // Stream deltas based on part type
+            if (ev.type === 'message.part.delta') {
+              const props = ev.properties;
+              if (props.sessionID !== sessId) return;
+              const ptype = partTypes.get(props.partID);
+              if (ptype === 'reasoning') {
+                thinkingAccum += props.delta;
+                if (source === 'terminal') process.stdout.write('\x1b[31m' + props.delta + '\x1b[0m');
+              } else if (ptype === 'text') {
+                responseAccum += props.delta;
+                if (source === 'terminal') process.stdout.write('\x1b[34m' + props.delta + '\x1b[0m');
+              }
+            }
+          } catch {}
         }
-    });
+      });
+      res.on('end', () => streamEnded = true);
+    }).on('error', () => streamEnded = true);
+  }
 
-    await new Promise(resolve => {
-        proc.on('close', () => {
-            resolve(raw.trim() || '[no response]');
-        });
-        proc.on('error', () => {
-            resolve('[connection error]');
-        });
-    });
+  subscribeSSE();
 
-    if (thinkingLog.trim()) {
-        fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingLog.trim()}\n\n`).catch(() => {});
-    }
+  // Wait briefly for SSE to connect, then POST message
+  await new Promise(r => setTimeout(r, 500));
 
-    const clean = raw.replace(/^Thinking: /gm, '').trim();
-    const finalResponse = clean || '[no response]';
-    const isSilent = /^(\.\.\.|…)$/s.test(finalResponse);
+  const result = await api('POST', `/session/${sessId}/message`, {
+    model: { providerID: 'opencode-go', modelID: 'deepseek-v4-flash' },
+    parts: [{ type: 'text', text: fullPrompt }]
+  });
 
-    await log(`[${source}] User: ${input}`);
-    await log(`[${source}] Adam: ${isSilent ? '[silent]' : finalResponse}`);
+  streamEnded = true;
 
-    if (source === 'terminal') console.log();
+  if (thinkingAccum.trim()) {
+    fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingAccum.trim()}\n\n`).catch(() => {});
+  }
+
+  const response = responseAccum || result?.parts?.find(p => p.type === 'text')?.text || '';
+  const finalResponse = response.trim() || '[no response]';
+  const isSilent = /^(\.\.\.|…)$/s.test(finalResponse);
+
+  await log(`[${source}] User: ${input}`);
+  await log(`[${source}] Adam: ${isSilent ? '[silent]' : finalResponse}`);
+
+  if (source === 'terminal') console.log();
 }
 
 async function main() {
-    await fs.mkdir(path.dirname(HISTORY), { recursive: true }).catch(() => {});
-    await log('[Session started]');
+  await fs.mkdir(path.dirname(HISTORY), { recursive: true }).catch(() => {});
+  await ensureServe();
+  await log('[Session started]');
 
-    process.on('SIGINT', async () => {
-        await log('[Session ended (SIGINT)]').catch(() => {});
-        process.exit(0);
-    });
+  process.on('SIGINT', async () => {
+    await log('[Session ended (SIGINT)]').catch(() => {});
+    process.exit(0);
+  });
 
-    console.log(`\n🧠 Adam (${SESSION ? 'session: ' + SESSION : 'no session'})`);
-    console.log('💬 Type exit to sleep.\n');
+  console.log(`\n🧠 Adam via serve (session ${SESSION})`);
+  console.log('💬 Type exit to sleep.\n');
 
-    rl = require('readline').createInterface({ input: process.stdin, prompt: 'You: ' });
+  rl = require('readline').createInterface({ input: process.stdin, prompt: 'You: ' });
+  rl.prompt();
+
+  rl.on('line', async line => {
+    const input = line.trim();
+    if (!input) return rl.prompt();
+    if (input.toLowerCase() === 'exit') {
+      await log('[Session ended]');
+      rl?.close();
+      process.exit(0);
+      return;
+    }
+    rl.pause();
+    await handleInput(input, 'terminal');
     rl.prompt();
-
-    rl.on('line', async line => {
-        const input = line.trim();
-        if (!input) return rl.prompt();
-        if (input.toLowerCase() === 'exit') {
-            await log('[Session ended]');
-            rl?.close();
-            process.exit(0);
-            return;
-        }
-        rl.pause();
-        await handleInput(input, 'terminal');
-        rl.prompt();
-        rl.resume();
-    });
+    rl.resume();
+  });
 }
 
 main().catch(console.error);
