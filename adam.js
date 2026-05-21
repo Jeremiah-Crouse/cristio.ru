@@ -30,7 +30,7 @@ async function log(entry) {
 async function opencodeRun(prompt, onChunk) {
     const persona = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
     const fullPrompt = `${persona}\n\nJeremiah：${prompt}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, '--format', 'json', '--thinking', fullPrompt] : ['run', '--format', 'json', '--thinking', fullPrompt];
+    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
 
     return new Promise((resolve) => {
         const proc = spawn('opencode', args, {
@@ -64,30 +64,27 @@ async function handleInput(input, source = 'terminal') {
 
     blocked = true;
     let responseAccum = '';
-    let reasoningAccum = '';
-    let chunkBuf = '';
+    let thinkingText = '';
+    let inThinking = false;
     const response = await opencodeRun(input, (chunk) => {
-        chunkBuf += chunk;
-        const lines = chunkBuf.split('\n');
-        chunkBuf = lines.pop() || '';
-        for (const line of lines) {
-            if (!line.trim()) continue;
-            try {
-                const ev = JSON.parse(line);
-                if (ev.type === 'reasoning') {
-                    const text = ev.part?.text || '';
-                    reasoningAccum += text + '\n';
-                    if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\n\x1b[0m');
-                } else if (ev.type === 'text') {
-                    const text = ev.part?.text || '';
-                    responseAccum += text;
-                    if (source === 'terminal') process.stdout.write('\x1b[34m' + text + '\n\x1b[0m');
-                } else if (ev.type === 'step_start' || ev.type === 'step_finish') {
-                    // ignore scaffolding events
-                } else if (ev.type === 'error') {
-                    if (source === 'terminal') console.error('\n[error]', ev);
-                }
-            } catch { /* skip unparseable */ }
+        const thinkingMatch = chunk.match(/^Thinking: (.*)/s);
+        if (thinkingMatch) {
+            inThinking = true;
+            const text = thinkingMatch[1];
+            thinkingText += text;
+            if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\x1b[0m');
+        } else if (inThinking) {
+            if (chunk.startsWith('\n\n') || chunk.length > 200) {
+                inThinking = false;
+                responseAccum += chunk;
+                if (source === 'terminal') process.stdout.write('\x1b[34m' + chunk + '\x1b[0m');
+            } else {
+                thinkingText += chunk;
+                if (source === 'terminal') process.stdout.write('\x1b[31m' + chunk + '\x1b[0m');
+            }
+        } else {
+            responseAccum += chunk;
+            if (source === 'terminal') process.stdout.write('\x1b[34m' + chunk + '\x1b[0m');
         }
     });
     blocked = false;
@@ -97,8 +94,8 @@ async function handleInput(input, source = 'terminal') {
         return;
     }
 
-    if (reasoningAccum.trim()) {
-        fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${reasoningAccum.trim()}\n\n`).catch(() => {});
+    if (thinkingText.trim()) {
+        fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingText.trim()}\n\n`).catch(() => {});
     }
 
     const finalResponse = responseAccum.trim() || '[no response]';
