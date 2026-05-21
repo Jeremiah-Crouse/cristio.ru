@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const express = require('express');
-const { spawn } = require('child_process');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -10,6 +10,7 @@ const SESSION = process.env.OPENCODE_SESSION || '';
 const CONV_DIR = path.join(__dirname, 'conversations');
 const MAX_HISTORY = 10;
 const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
+let WIDGET_SESSION = process.env.WIDGET_SESSION || '';
 
 fs.mkdirSync(CONV_DIR, { recursive: true });
 
@@ -17,20 +18,34 @@ function userKey(name) {
   return name.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase().slice(0, 64);
 }
 
-function opencodeRun(prompt) {
-  return new Promise((resolve) => {
-    const fullPrompt = `${PERSONA}\n\n${prompt}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
-    const proc = spawn('opencode', args, {
-      cwd: path.join(process.env.HOME, '.adam'),
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env }
+function api(method, pathname, body) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : '';
+    const opts = { hostname: 'localhost', port: 4096, path: pathname, method,
+      headers: { 'Content-Type': 'application/json' } };
+    if (data) opts.headers['Content-Length'] = Buffer.byteLength(data);
+    const req = http.request(opts, (res) => {
+      let buf = '';
+      res.on('data', d => buf += d);
+      res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(null); } });
     });
-    let out = '';
-    proc.stdout.on('data', c => out += c.toString());
-    proc.on('close', () => resolve(out.trim() || '[no response]'));
-    proc.on('error', () => resolve('[connection error]'));
+    req.on('error', reject);
+    if (data) req.write(data);
+    req.end();
   });
+}
+
+async function ensureWidgetSession() {
+  if (WIDGET_SESSION) return;
+  try {
+    const result = await api('POST', '/session', { slug: 'widget' });
+    if (result?.id) {
+      WIDGET_SESSION = result.id;
+      console.log('Created widget session:', WIDGET_SESSION);
+    }
+  } catch (e) {
+    console.error('Failed to create widget session:', e.message);
+  }
 }
 
 const app = express();
@@ -62,30 +77,18 @@ app.post('/api/chat', async (req, res) => {
 
   const displayName = name || 'User';
   const speaker = /Queen\s*Lo\s*Wren/i.test(displayName) ? 'Queen Lo Wren of the Qwert of Crousia' : displayName;
-  const prompt = `[${speaker}]: ${message.trim()}`;
+  const fullPrompt = `${PERSONA}\n\n[${speaker}]: ${message.trim()}\n\nAdam：`;
+
+  const sessionId = WIDGET_SESSION || SESSION;
 
   try {
-    const raw = await opencodeRun(prompt);
-    const lines = raw.split('\n');
-    let reasoning = '';
-    let response = '';
-    let inThinking = false;
-    let passedEol = false;
-    for (const line of lines) {
-      if (line.startsWith('Thinking: ')) {
-        inThinking = true;
-        passedEol = false;
-        reasoning += line.slice(10) + '\n';
-      } else if (inThinking && line.trim() && !passedEol) {
-        reasoning += line + '\n';
-      } else if (inThinking && !line.trim()) {
-        passedEol = true;
-      } else if (line.trim()) {
-        response += line + '\n';
-      }
-    }
-    reasoning = reasoning.trim();
-    response = response.trim() || '[no response]';
+    const result = await api('POST', `/session/${sessionId}/message`, {
+      model: { providerID: 'opencode-go', modelID: 'deepseek-v4-flash' },
+      parts: [{ type: 'text', text: fullPrompt }]
+    });
+
+    const reasoning = (result?.parts?.find(p => p.type === 'reasoning')?.text || '').trim();
+    const response = (result?.parts?.find(p => p.type === 'text')?.text || '').trim() || '[no response]';
 
     const history = loadHistory(speaker);
     history.push({ user: message.trim(), bot: response });
@@ -93,11 +96,16 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ reasoning, response });
   } catch (e) {
-    console.error('Error:', e.message);
+    console.error('API error:', e.message);
     res.json({ reasoning: '', response: '[connection error]' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Adam's API listening on :${PORT}`);
-});
+async function main() {
+  await ensureWidgetSession();
+  app.listen(PORT, () => {
+    console.log(`Adam's API listening on :${PORT}`);
+  });
+}
+
+main().catch(console.error);
