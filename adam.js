@@ -64,44 +64,32 @@ async function handleInput(input, source = 'terminal') {
 
     blocked = true;
     let responseAccum = '';
-    let silenceDetected = false;
-    let inReasoning = false;
     let reasoningAccum = '';
+    let chunkBuf = '';
     const response = await opencodeRun(input, (chunk) => {
-        responseAccum += chunk;
-        if (inReasoning) {
-            reasoningAccum += chunk;
-            if (source === 'terminal') {
-                if (chunk.startsWith('Thinking: ')) {
-                    process.stdout.write('\x1b[2m\x1b[33m' + chunk + '\x1b[0m');
-                } else {
-                    process.stdout.write('\x1b[2m\x1b[33m' + chunk + '\x1b[0m');
+        chunkBuf += chunk;
+        const lines = chunkBuf.split('\n');
+        chunkBuf = lines.pop() || '';
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+                const ev = JSON.parse(line);
+                if (ev.type === 'reasoning') {
+                    const text = ev.part?.text || '';
+                    reasoningAccum += text + '\n';
+                    if (source === 'terminal') process.stdout.write('\x1b[2m\x1b[33m' + text + '\x1b[0m');
+                } else if (ev.type === 'text') {
+                    const text = ev.part?.text || '';
+                    responseAccum += text;
+                    if (source === 'terminal') process.stdout.write(text);
+                } else if (ev.type === 'step_start' || ev.type === 'step_finish') {
+                    // ignore scaffolding events
+                } else if (ev.type === 'error') {
+                    if (source === 'terminal') console.error('\n[error]', ev);
                 }
-            }
-            if (chunk.includes('\n\n') && !chunk.startsWith('Thinking:')) {
-                inReasoning = false;
-                reasoningAccum = '';
-            }
-            return;
+            } catch { /* skip unparseable */ }
         }
-        if (chunk.startsWith('Thinking: ')) {
-            inReasoning = true;
-            reasoningAccum = chunk;
-            if (source === 'terminal') {
-                process.stdout.write('\x1b[2m\x1b[33m' + chunk + '\x1b[0m');
-            }
-            return;
-        }
-        if (isSilentSignal(responseAccum)) {
-            silenceDetected = true;
-        }
-        if (silenceDetected) return;
-        if (source === 'terminal') process.stdout.write(chunk);
     });
-    if (reasoningAccum) {
-        const clean = reasoningAccum.replace(/^Thinking: /gm, '').trim();
-        if (clean) fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${clean}\n\n`).catch(() => {});
-    }
     blocked = false;
 
     if (interrupted) {
@@ -109,15 +97,20 @@ async function handleInput(input, source = 'terminal') {
         return;
     }
 
-    const isSilent = isSilentSignal(response);
+    if (reasoningAccum.trim()) {
+        fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${reasoningAccum.trim()}\n\n`).catch(() => {});
+    }
 
-    if (response.includes('[RESTART]') || response.trim() === '[RESTART]') {
+    const finalResponse = responseAccum.trim() || '[no response]';
+    const isSilent = isSilentSignal(finalResponse);
+
+    if (finalResponse.includes('[RESTART]') || finalResponse === '[RESTART]') {
         await log('[Adam restarted]');
         process.exit(42);
     }
 
     await log(`[${source}] User: ${input}`);
-    await log(`[${source}] Adam: ${isSilent ? '[silent]' : response}`);
+    await log(`[${source}] Adam: ${isSilent ? '[silent]' : finalResponse}`);
 }
 
 async function main() {
