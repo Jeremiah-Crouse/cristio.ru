@@ -2,6 +2,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
+const http = require('http');
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -9,50 +10,80 @@ dotenv.config();
 const HISTORY = path.join(process.env.HOME, '.adam', 'memory', 'full_history.log');
 const REASONING_LOG = path.join(process.env.HOME, '.adam', 'memory', 'reasoning.log');
 const SESSION = process.env.OPENCODE_SESSION || '';
+const SERVER_PORT = 4096;
+const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 
-let currentChild = null;
-let blocked = false;
-let interrupted = false;
 let rl = null;
-
-function isSilentSignal(text) {
-    if (!text) return false;
-    const t = text.trim();
-    if (/^(\.\.\.|…)$/s.test(t)) return true;
-    const lower = t.replace(/^[^a-zA-Z\u4e00-\u9fff]+/, '').toLowerCase();
-    return /^silent(\b|$)/.test(lower) || /^沉默/.test(lower);
-}
 
 async function log(entry) {
     await fs.appendFile(HISTORY, `[${new Date().toISOString()}] ${entry}\n`).catch(() => {});
 }
 
-async function opencodeRun(prompt, onChunk) {
-    const persona = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
-    const fullPrompt = `${persona}\n\nJeremiah：${prompt}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
-
-    return new Promise((resolve) => {
-        const proc = spawn('opencode', args, {
-            cwd: process.env.HOME + '/.adam',
-            stdio: ['ignore', 'pipe', 'pipe'],
-            shell: false,
-            env: { ...process.env }
+function serverPost(pathname, body) {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify(body);
+        const req = http.request({
+            hostname: 'localhost', port: SERVER_PORT,
+            path: pathname, method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+        }, (res) => {
+            let buf = '';
+            res.on('data', d => buf += d);
+            res.on('end', () => resolve(JSON.parse(buf)));
         });
-        currentChild = proc;
-        let stdout = '';
-
-        proc.stdout.on('data', c => {
-            const chunk = c.toString();
-            stdout += chunk;
-            if (onChunk) onChunk(chunk);
-        });
-        proc.on('error', () => { currentChild = null; resolve('[connection error]'); });
-        proc.on('close', () => {
-            currentChild = null;
-            resolve(stdout.trim() || '[no response]');
-        });
+        req.on('error', reject);
+        req.write(data);
+        req.end();
     });
+}
+
+async function serverGet(pathname) {
+    return new Promise((resolve, reject) => {
+        http.get({ hostname: 'localhost', port: SERVER_PORT, path: pathname }, (res) => {
+            let buf = '';
+            res.on('data', d => buf += d);
+            res.on('end', () => {
+                try { resolve(JSON.parse(buf)); } catch { resolve(null); }
+            });
+        }).on('error', reject);
+    });
+}
+
+async function sendMessage(prompt, onReasoning, onText) {
+    const fullPrompt = `${PERSONA}\n\nJeremiah：${prompt}\n\nAdam：`;
+    const result = await serverPost(`/session/${SESSION}/message`, {
+        parts: [{ type: 'text', text: fullPrompt }]
+    });
+    for (const part of result.parts || []) {
+        if (part.type === 'reasoning') {
+            onReasoning(part.text || '');
+        } else if (part.type === 'text') {
+            onText(part.text || '');
+        }
+    }
+    return result.parts?.find(p => p.type === 'text')?.text || '[no response]';
+}
+
+async function ensureServer() {
+    try {
+        await serverGet('/session');
+    } catch {
+        console.log('🔄 Starting opencode server...');
+        spawn('opencode', ['serve', '--port', String(SERVER_PORT)], {
+            stdio: 'ignore', detached: true, env: { ...process.env }
+        }).unref();
+        // Wait for server to be ready
+        for (let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 1000));
+            try {
+                await serverGet('/session');
+                console.log('✅ Server ready');
+                return;
+            } catch {}
+        }
+        console.error('❌ Server failed to start');
+        process.exit(1);
+    }
 }
 
 async function handleInput(input, source = 'terminal') {
@@ -62,44 +93,28 @@ async function handleInput(input, source = 'terminal') {
         process.exit(42);
     }
 
-    blocked = true;
-    let responseAccum = '';
-    let thinkingText = '';
-    let inThinking = false;
-    const response = await opencodeRun(input, (chunk) => {
-        const thinkingMatch = chunk.match(/^Thinking: (.*)/s);
-        if (thinkingMatch) {
-            inThinking = true;
-            const text = thinkingMatch[1];
-            thinkingText += text;
-            if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\x1b[0m');
-        } else if (inThinking) {
-            if (chunk.startsWith('\n\n') || chunk.length > 200) {
-                inThinking = false;
-                responseAccum += chunk;
-                if (source === 'terminal') process.stdout.write('\x1b[34m' + chunk + '\x1b[0m');
-            } else {
-                thinkingText += chunk;
-                if (source === 'terminal') process.stdout.write('\x1b[31m' + chunk + '\x1b[0m');
-            }
-        } else {
-            responseAccum += chunk;
-            if (source === 'terminal') process.stdout.write('\x1b[34m' + chunk + '\x1b[0m');
-        }
-    });
-    blocked = false;
+    if (source === 'terminal') console.log();
 
-    if (interrupted) {
-        interrupted = false;
-        return;
-    }
+    let thinkingText = '';
+    let responseText = '';
+
+    const response = await sendMessage(input,
+        (text) => {
+            thinkingText += text + '\n';
+            if (source === 'terminal') process.stdout.write('\x1b[31m' + text + '\x1b[0m');
+        },
+        (text) => {
+            responseText += text;
+            if (source === 'terminal') process.stdout.write('\x1b[34m' + text + '\x1b[0m');
+        }
+    );
 
     if (thinkingText.trim()) {
         fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingText.trim()}\n\n`).catch(() => {});
     }
 
-    const finalResponse = responseAccum.trim() || '[no response]';
-    const isSilent = isSilentSignal(finalResponse);
+    const finalResponse = responseText.trim() || response || '[no response]';
+    const isSilent = /^(\.\.\.|…)$/s.test(finalResponse.trim());
 
     if (finalResponse.includes('[RESTART]') || finalResponse === '[RESTART]') {
         await log('[Adam restarted]');
@@ -108,10 +123,13 @@ async function handleInput(input, source = 'terminal') {
 
     await log(`[${source}] User: ${input}`);
     await log(`[${source}] Adam: ${isSilent ? '[silent]' : finalResponse}`);
+
+    if (source === 'terminal') console.log();
 }
 
 async function main() {
     await fs.mkdir(path.dirname(HISTORY), { recursive: true }).catch(() => {});
+    await ensureServer();
     await log('[Session started]');
 
     process.on('SIGINT', async () => {
@@ -119,7 +137,7 @@ async function main() {
         process.exit(0);
     });
 
-    console.log(`\n👤 Adam (${SESSION ? 'session: ' + SESSION : 'no session'})`);
+    console.log(`\n🧠 Adam (${SESSION ? 'session: ' + SESSION : 'no session'})`);
     console.log('💬 Type exit to sleep.\n');
 
     rl = require('readline').createInterface({ input: process.stdin, prompt: 'You: ' });
@@ -134,8 +152,10 @@ async function main() {
             process.exit(0);
             return;
         }
+        rl.pause();
         await handleInput(input, 'terminal');
         rl.prompt();
+        rl.resume();
     });
 }
 
