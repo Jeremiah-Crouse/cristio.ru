@@ -131,6 +131,18 @@ function extractReply(ep,data){
   return data.response;
 }
 
+function typewriter(el, text, speed, cb){
+  let i=0;
+  function next(){
+    if(i>=text.length){if(cb) cb();return;}
+    const n=Math.min(2+Math.floor(Math.random()*3),text.length-i);
+    el.textContent+=text.slice(i,i+n);
+    i+=n;
+    setTimeout(next,speed);
+  }
+  next();
+}
+
 const ENDPOINTS=[
   {name:'Adam',url:'https://api.cristio.ru/api/chat'},
   {name:'Eve',url:'https://crousia.com/api/eve/message',format:'eve'},
@@ -154,6 +166,12 @@ async function tryEndpoint(idx,message,user){
     const d=await r.json();
     const reply=extractReply(ep,d);
     if(!reply||reply==='[no response]')throw new Error('empty');
+    if(d.reasoning){
+      const rc=document.createElement('div');
+      rc.style.cssText='font-style:italic;opacity:0.7;color:#ff6b35;margin-bottom:4px;';
+      chat.appendChild(rc);
+      await new Promise(r=>typewriter(rc,d.reasoning,12,r));
+    }
     addMsg(reply,'bot');
     saveHistory();
   }catch(e){
