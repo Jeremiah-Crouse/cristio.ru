@@ -75,11 +75,12 @@ app.post('/api/chat', async (req, res) => {
       if (line.startsWith('Thinking: ')) {
         inThinking = true;
         reasoning += line.slice(10) + '\n';
-      } else if (inThinking && !response) {
+      } else if (inThinking && line.trim()) {
         reasoning += line + '\n';
-      } else {
-        response += line + '\n';
+      } else if (inThinking) {
         inThinking = false;
+      } else if (line.trim()) {
+        response += line + '\n';
       }
     }
     reasoning = reasoning.trim();
