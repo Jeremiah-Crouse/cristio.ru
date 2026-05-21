@@ -52,6 +52,7 @@ async function serverGet(pathname) {
 async function sendMessage(prompt, onReasoning, onText) {
     const fullPrompt = `${PERSONA}\n\nJeremiah：${prompt}\n\nAdam：`;
     const result = await serverPost(`/session/${SESSION}/message`, {
+        model: { providerID: 'opencode-go', modelID: 'deepseek-v4-flash' },
         parts: [{ type: 'text', text: fullPrompt }]
     });
     for (const part of result.parts || []) {
