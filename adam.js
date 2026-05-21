@@ -9,52 +9,12 @@ dotenv.config();
 const HISTORY = path.join(process.env.HOME, '.adam', 'memory', 'full_history.log');
 const REASONING_LOG = path.join(process.env.HOME, '.adam', 'memory', 'reasoning.log');
 const SESSION = process.env.OPENCODE_SESSION || '';
+const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 
 let rl = null;
 
 async function log(entry) {
     await fs.appendFile(HISTORY, `[${new Date().toISOString()}] ${entry}\n`).catch(() => {});
-}
-
-function streamProgressive(text, write, delay = 12) {
-    return new Promise(resolve => {
-        let i = 0;
-        function next() {
-            if (i >= text.length) { resolve(); return; }
-            const remain = text.length - i;
-            const size = remain < 2 ? remain : Math.min(2 + Math.floor(Math.random() * 3), remain);
-            write(text.slice(i, i + size));
-            i += size;
-            setTimeout(next, delay);
-        }
-        next();
-    });
-}
-
-async function opencodeRun(prompt, onChunk) {
-    const persona = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
-    const fullPrompt = `${persona}\n\nJeremiah：${prompt}\n\nAdam：`;
-    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
-
-    return new Promise((resolve) => {
-        const proc = spawn('opencode', args, {
-            cwd: process.env.HOME + '/.adam',
-            stdio: ['ignore', 'pipe', 'pipe'],
-            shell: false,
-            env: { ...process.env }
-        });
-        let stdout = '';
-
-        proc.stdout.on('data', c => {
-            const chunk = c.toString();
-            stdout += chunk;
-            if (onChunk) onChunk(chunk);
-        });
-        proc.on('error', () => { resolve('[connection error]'); });
-        proc.on('close', () => {
-            resolve(stdout.trim() || '[no response]');
-        });
-    });
 }
 
 async function handleInput(input, source = 'terminal') {
@@ -66,44 +26,59 @@ async function handleInput(input, source = 'terminal') {
 
     if (source === 'terminal') console.log();
 
-    let thinkingText = '';
-    let responseText = '';
+    const fullPrompt = `${PERSONA}\n\nJeremiah：${input}\n\nAdam：`;
+    const args = SESSION ? ['run', '-s', SESSION, '--thinking', fullPrompt] : ['run', '--thinking', fullPrompt];
+    let raw = '';
+    let thinkingLog = '';
 
-    const raw = await opencodeRun(input, (chunk) => {
-        const thinkingMatch = chunk.match(/^Thinking: (.+)/s);
-        if (thinkingMatch) {
-            thinkingText += thinkingMatch[1];
-        } else if (thinkingText && !responseText) {
-            thinkingText += chunk;
+    const proc = spawn('opencode', args, {
+        cwd: process.env.HOME + '/.adam',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        shell: false,
+        env: { ...process.env }
+    });
+
+    proc.stdout.on('data', c => {
+        const chunk = c.toString();
+        raw += chunk;
+        if (chunk.startsWith('Thinking:')) {
+            const text = chunk.replace('Thinking:', '').trim();
+            thinkingLog += text + '\n';
+            if (source === 'terminal') process.stdout.write('\x1b[31m' + chunk + '\x1b[0m');
+        } else if (chunk.includes('Thinking:')) {
+            const parts = chunk.split('Thinking:');
+            if (parts[0]) process.stdout.write('\x1b[34m' + parts[0] + '\x1b[0m');
+            if (parts[1]) {
+                process.stdout.write('\x1b[31m' + 'Thinking:' + parts[1] + '\x1b[0m');
+                const text = parts[1].trim();
+                if (text) thinkingLog += text + '\n';
+            }
         } else {
-            responseText += chunk;
+            if (source === 'terminal') process.stdout.write('\x1b[34m' + chunk + '\x1b[0m');
         }
     });
 
-    if (thinkingText.trim()) {
-        const text = thinkingText.trim();
-        if (source === 'terminal') {
-            await streamProgressive(text, (t) => process.stdout.write('\x1b[31m' + t + '\x1b[0m'), 10);
-            process.stdout.write('\n');
-        }
-        fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${text}\n\n`).catch(() => {});
+    await new Promise(resolve => {
+        proc.on('close', () => {
+            resolve(raw.trim() || '[no response]');
+        });
+        proc.on('error', () => {
+            resolve('[connection error]');
+        });
+    });
+
+    if (thinkingLog.trim()) {
+        fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingLog.trim()}\n\n`).catch(() => {});
     }
 
-    if (source === 'terminal' && thinkingText.trim()) process.stdout.write('\n');
-
-    if (responseText || raw) {
-        const text = (responseText || raw).trim();
-        if (source === 'terminal') {
-            await streamProgressive(text, (t) => process.stdout.write('\x1b[34m' + t + '\x1b[0m'), 8);
-            process.stdout.write('\n');
-        }
-    }
-
-    const finalResponse = (responseText || raw).trim() || '[no response]';
+    const clean = raw.replace(/^Thinking: /gm, '').trim();
+    const finalResponse = clean || '[no response]';
     const isSilent = /^(\.\.\.|…)$/s.test(finalResponse);
 
     await log(`[${source}] User: ${input}`);
     await log(`[${source}] Adam: ${isSilent ? '[silent]' : finalResponse}`);
+
+    if (source === 'terminal') console.log();
 }
 
 async function main() {
