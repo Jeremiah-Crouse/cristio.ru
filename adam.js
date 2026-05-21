@@ -14,19 +14,23 @@ const API = { host: 'localhost', port: 4096 };
 const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 
 let rl = null;
+let currentAbort = null;
 
-function api(method, pathname, body) {
+function api(method, pathname, body, onReq) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : '';
     const opts = { hostname: API.host, port: API.port, path: pathname, method,
       headers: { 'Content-Type': 'application/json' } };
     if (data) opts.headers['Content-Length'] = Buffer.byteLength(data);
     const req = http.request(opts, (res) => {
+      currentAbort = null;
       let buf = '';
       res.on('data', d => buf += d);
       res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(buf); } });
     });
-    req.on('error', reject);
+    req.on('error', (e) => { if (e.code !== 'ECONNRESET') reject(e); });
+    currentAbort = req;
+    if (onReq) onReq(req);
     if (data) req.write(data);
     req.end();
   });
@@ -59,6 +63,13 @@ async function handleInput(input, source = 'terminal') {
   }
 
   if (source === 'terminal') console.log();
+
+  // Abort previous processing
+  if (currentAbort) {
+    currentAbort.destroy();
+    currentAbort = null;
+    process.stdout.write('\n\x1b[33m[interrupted]\x1b[0m\n');
+  }
 
   const fullPrompt = `${PERSONA}\n\nJeremiah：${input}\n\nAdam：`;
   const partTypes = new Map();
