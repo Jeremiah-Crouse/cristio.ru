@@ -60,6 +60,8 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
     </div>
   </div>
   <div id="chat-input">
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+    <button id="upload-btn" style="padding:0.8rem 0.5rem;background:none;border:none;cursor:pointer;color:#666" title="Upload image">📷</button>
     <textarea id="msg-input" placeholder="Type something..." rows="1"></textarea>
     <button id="send-btn">Send</button>
   </div>
@@ -207,6 +209,22 @@ function connectSocket(name){
 if(userName)connectSocket(userName);
 
 document.getElementById('reset-btn').onclick=doReset;
+document.getElementById('upload-btn').onclick=()=>document.getElementById('file-input').click();
+document.getElementById('file-input').onchange=async function(){
+  const file=this.files[0];if(!file)return;
+  addMsg('[uploading '+file.name+']','user');saveHistory();
+  const fd=new FormData();fd.append('file',file);fd.append('name',userName||'User');fd.append('message',input.value.trim()||'');
+  input.value='';
+  try{
+    const r=await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.image_url)addMsg('[Image]','bot');
+    if(d.description)addMsg(d.description,'bot');
+    if(d.response)addMsg(d.response,'bot');
+    saveHistory();
+  }catch{addMsg('Upload failed.','bot')}
+  this.value='';
+};
 async function doReset(){
   addMsg('Resetting connection...','bot');
   try{await fetch('https://alphacoin.uk/api/reset');addMsg('Reset done.','bot');}catch{addMsg('Reset failed.','bot')}
