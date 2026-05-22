@@ -20,7 +20,7 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 #chat-msgs .user{background:#333;color:#fff;align-self:flex-end;margin-left:auto}
 #chat-msgs .bot{background:#222;color:#aaa;align-self:flex-start}
 #chat-input{display:flex;border-top:1px solid #333}
-#chat-input textarea{flex:1;padding:0.8rem;background:transparent;border:none;color:#fff;outline:none;resize:none;font-family:inherit;font-size:inherit;line-height:1.4;min-height:20px;max-height:120px}
+#chat-input textarea{flex:1;padding:0.8rem;background:transparent;border:none;color:#fff;outline:none;resize:none;font-family:inherit;font-size:inherit;line-height:1.4;min-height:20px;max-height:60px}
 #chat-input button{padding:0.8rem 1rem;background:#fff;color:#000;border:none;cursor:pointer}
 #chat-name-wrap{display:none;padding:1rem;border-top:1px solid #333;flex-direction:column;gap:0.5rem}
 #chat-name-wrap .label{color:#888;font-size:0.85rem}
@@ -192,7 +192,7 @@ send.onclick=async()=>{
   await tryEndpoint(0,m,userName);
 };
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send.click()}});
-input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px'});
+input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,60)+'px'});
 loadSavedHistory();
 if(!userName)setTimeout(showNamePrompt,500);
 </script>
