@@ -50,7 +50,7 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 <button id="chat-btn">+</button>
 
 <div id="chat-box">
-  <div id="chat-header"><div id="reasoning-bar"><span id="reasoning-text"></span></div></div>
+  <div id="chat-header"><div id="reasoning-bar"><span id="reasoning-text"></span></div><span id="reset-btn" style="cursor:pointer;font-size:0.7rem;color:#666;margin-left:auto;padding:0 0.5rem" title="Reset">↻</span></div>
   <div id="chat-msgs"></div>
   <div id="chat-name-wrap">
     <div class="label">What should I call you?</div>
@@ -206,6 +206,7 @@ function connectSocket(name){
 }
 if(userName)connectSocket(userName);
 
+document.getElementById('reset-btn').onclick=doReset;
 async function doReset(){
   addMsg('Resetting connection...','bot');
   try{await fetch('https://alphacoin.uk/api/reset');addMsg('Reset done.','bot');}catch{addMsg('Reset failed.','bot')}
