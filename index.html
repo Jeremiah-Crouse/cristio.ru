@@ -243,7 +243,10 @@ document.getElementById('file-input').onchange=async function(){
 async function doReset(){
   const btn=document.getElementById('reset-btn');
   const orig=btn.textContent;btn.textContent='↻';btn.style.animation='spin .8s linear infinite';
+  const start=Date.now();
   try{await fetch('https://alphacoin.uk/api/reset');}catch{}
+  const elapsed=Date.now()-start;
+  if(elapsed<1500)await new Promise(r=>setTimeout(r,1500-elapsed));
   btn.textContent=orig;btn.style.animation='';
 }
 
