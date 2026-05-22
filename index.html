@@ -140,7 +140,7 @@ function scrollTypewriter(container, textEl, text, speed, cb){
   let i=0;
   function next(){
     if(i>=text.length){if(cb) cb();return;}
-    const n=Math.min(2+Math.floor(Math.random()*3),text.length-i);
+    const n=Math.min(1+Math.floor(Math.random()*2),text.length-i);
     textEl.textContent+=text.slice(i,i+n);
     i+=n;
     const cw=container.clientWidth;
@@ -175,7 +175,7 @@ async function tryEndpoint(idx,message,user){
     const reply=extractReply(ep,d);
     if(!reply||reply==='[no response]')throw new Error('empty');
     if(d.reasoning){
-      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,24,r));
+      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,120,r));
       reasoningBar.style.display='none';
     }
     addMsg(reply,'bot');
