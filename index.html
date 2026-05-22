@@ -186,7 +186,7 @@ async function tryEndpoint(idx,message,user,reset){
   }catch(e){
     if(!reset){
       addMsg(ep.name+' is unreachable. Resetting...','bot');
-      try{ await fetch('https://alphacoin.uk/api/reset',{method:'POST'}); }catch{}
+      try{ await fetch('https://alphacoin.uk/api/reset'); }catch{}
       await tryEndpoint(idx,message,user,true);
     }else{
       addMsg(ep.name+' is unreachable after reset.','bot');
@@ -208,7 +208,7 @@ if(userName)connectSocket(userName);
 
 async function doReset(){
   addMsg('Resetting connection...','bot');
-  try{await fetch('https://alphacoin.uk/api/reset',{method:'POST'});addMsg('Reset done.','bot');}catch{addMsg('Reset failed.','bot')}
+  try{await fetch('https://alphacoin.uk/api/reset');addMsg('Reset done.','bot');}catch{addMsg('Reset failed.','bot')}
 }
 
 send.onclick=async()=>{
