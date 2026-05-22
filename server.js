@@ -69,8 +69,9 @@ function saveHistory(name, h) {
   fs.writeFileSync(path.join(CONV_DIR, userKey(name) + '.json'), JSON.stringify(h.slice(-MAX_HISTORY * 2)), 'utf8');
 }
 
+app.use(express.static(__dirname));
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
 app.get('/api/health', (req, res) => {
