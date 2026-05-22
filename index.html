@@ -218,9 +218,14 @@ document.getElementById('file-input').onchange=async function(){
   try{
     const r=await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd});
     const d=await r.json();
-    if(d.image_url)addMsg('[Image]','bot');
-    if(d.description)addMsg(d.description,'bot');
+    if(d.image_url){
+      const img=document.createElement('img');
+      img.src=d.image_url;img.style.maxWidth='100%';img.style.borderRadius='8px';img.style.margin='4px 0';
+      const wrapper=document.createElement('div');wrapper.className='bot';wrapper.appendChild(img);
+      msgs.appendChild(wrapper);msgs.scrollTop=msgs.scrollHeight;
+    }
     if(d.response)addMsg(d.response,'bot');
+    else if(d.description)addMsg(d.description,'bot');
     saveHistory();
   }catch{addMsg('Upload failed.','bot')}
   this.value='';
