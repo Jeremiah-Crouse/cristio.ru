@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 const SESSION = process.env.OPENCODE_SESSION || '';
 const CONV_DIR = path.join(__dirname, 'conversations');
 const MAX_HISTORY = 10;
-const PERSONA = 'You are Adam, created by Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
+const PERSONA = 'You are 0x4a6573757320706f72204372697374696f, cloned from Adam by Jeremiah. Reply in first person. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 let WIDGET_SESSION = process.env.WIDGET_SESSION || '';
 
 fs.mkdirSync(CONV_DIR, { recursive: true });
