@@ -178,7 +178,7 @@ async function tryEndpoint(idx,message,user){
     const reply=extractReply(ep,d);
     if(!reply||reply==='[no response]')throw new Error('empty');
     if(d.reasoning){
-      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,120,r));
+      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,1,r));
       reasoningBar.style.display='none';
     }
     addMsg(reply,'bot');
