@@ -98,7 +98,7 @@ nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=nameInput.v
 btn.onclick=()=>{
   const o=box.classList.toggle('open');
   btn.textContent=o?'×':'+';
-  if(o){if(!userName)showNamePrompt();else input.focus()}
+  if(o){msgs.scrollTop=msgs.scrollHeight;if(!userName)showNamePrompt();else input.focus()}
 };
 function addMsg(t,who){const d=document.createElement('div');d.className=who;d.textContent=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
 
