@@ -213,7 +213,18 @@ document.getElementById('upload-btn').onclick=()=>document.getElementById('file-
 document.getElementById('file-input').onchange=async function(){
   const file=this.files[0];if(!file)return;
   addMsg('[uploading '+file.name+']','user');saveHistory();
-  const fd=new FormData();fd.append('file',file);fd.append('name',userName||'User');fd.append('message',input.value.trim()||'');
+  // Compress image client-side
+  let uploadFile=file;
+  if(file.type.startsWith('image/')){
+    const img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=URL.createObjectURL(file)});
+    let w=img.width,h=img.height;
+    const max=1200;if(w>max||h>max){const s=Math.min(max/w,max/h);w*=s;h*=s}
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const ctx=c.getContext('2d');ctx.drawImage(img,0,0,w,h);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));
+    uploadFile=new File([blob],file.name.replace(/\.[^.]+$/,'.jpg'),{type:'image/jpeg'});
+  }
+  const fd=new FormData();fd.append('file',uploadFile);fd.append('name',userName||'User');fd.append('message',input.value.trim()||'');
   input.value='';
   try{
     const r=await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd});
