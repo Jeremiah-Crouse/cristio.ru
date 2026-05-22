@@ -113,7 +113,7 @@ spinnerCSS();
 
 function getHistory(){
   const els=msgs.querySelectorAll('.user,.bot');
-  return Array.from(els).map(e=>({role:e.className,text:e.textContent}));
+  return Array.from(els).map(e=>({role:e.className,text:e.textContent,img:e.querySelector('img')?.src||''}));
 }
 
 function saveHistory(){
@@ -124,7 +124,12 @@ function saveHistory(){
 function loadSavedHistory(){
   if(!userName)return;
   const saved=localStorage.getItem(HISTORY_KEY+'_'+userName);
-  if(saved)try{JSON.parse(saved).forEach(e=>addMsg(e.text,e.role))}catch{}
+  if(saved)try{
+    JSON.parse(saved).forEach(e=>{
+      const el=addMsg(e.text,e.role);
+      if(e.img){el.innerHTML='<img src="'+e.img+'" style="max-width:100%;border-radius:8px;margin:4px 0">';el.textContent=''}
+    });
+  }catch{}
 }
 
 function emailFallback(){
