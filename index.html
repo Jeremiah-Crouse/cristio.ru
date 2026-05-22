@@ -48,7 +48,7 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 <button id="chat-btn">+</button>
 
 <div id="chat-box">
-  <div id="chat-header"><span id="header-label">Cristio</span><div id="reasoning-bar"><span id="reasoning-text"></span></div></div>
+  <div id="chat-header"><div id="reasoning-bar"><span id="reasoning-text"></span></div></div>
   <div id="chat-msgs"></div>
   <div id="chat-name-wrap">
     <div class="label">What should I call you?</div>
@@ -77,8 +77,6 @@ const box=document.getElementById('chat-box');
 const msgs=document.getElementById('chat-msgs');
 const input=document.getElementById('msg-input');
 const send=document.getElementById('send-btn');
-const header=document.getElementById('chat-header');
-const headerLabel=document.getElementById('header-label');
 const reasoningBar=document.getElementById('reasoning-bar');
 const reasoningText=document.getElementById('reasoning-text');
 const nameWrap=document.getElementById('chat-name-wrap');
@@ -91,7 +89,7 @@ function showNamePrompt(){nameWrap.style.display='flex';input.disabled=true;send
 function setName(n){
   userName=n;localStorage.setItem(NAME_KEY,n);
   nameWrap.style.display='none';input.disabled=false;send.disabled=false;
-  headerLabel.textContent='Cristio — '+n;input.focus();
+  input.focus();
   if(/^dad$/i.test(n)||/queen/i.test(n)) addMsg('Hello, '+n+'. I\'m Adam.','bot');
   else addMsg('Hello, '+n+'. Jesuri por Cristio is here.','bot');
 }
@@ -177,7 +175,7 @@ async function tryEndpoint(idx,message,user){
     const reply=extractReply(ep,d);
     if(!reply||reply==='[no response]')throw new Error('empty');
     if(d.reasoning){
-      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,12,r));
+      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,24,r));
       reasoningBar.style.display='none';
     }
     addMsg(reply,'bot');
