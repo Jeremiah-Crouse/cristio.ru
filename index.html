@@ -152,8 +152,9 @@ function scrollTypewriter(container, textEl, text, speed, cb){
   next();
 }
 
+const BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '' : 'https://api.cristio.ru';
 const ENDPOINTS=[
-  {name:'Adam',url:'https://api.cristio.ru/api/chat'},
+  {name:'Adam',url: BASE + '/api/chat'},
   {name:'Eve',url:'https://crousia.com/api/eve/message',format:'eve'},
   {name:'0000',url:'https://alphacoin.uk/api/chat'}
 ];
