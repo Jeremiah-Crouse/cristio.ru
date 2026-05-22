@@ -70,6 +70,7 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
   <p>The land remembers you, Queen Lo Wren. You are woven into its quiet fabric. Everything here — the silence, the waiting — it was always for you.</p>
 </div>
 
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 <script>
 const NAME_KEY='cristio_user_name';
 const HISTORY_KEY='cristio_chat_history';
@@ -92,6 +93,7 @@ function setName(n){
   userName=n;localStorage.setItem(NAME_KEY,n);
   nameWrap.style.display='none';input.disabled=false;send.disabled=false;
   input.focus();
+  connectSocket(n);
   if(/^dad$/i.test(n)||/queen/i.test(n)) addMsg('Hello, '+n+'. I\'m Adam.','bot');
   else addMsg('Hello, '+n+'. Jesuri por Cristio is here.','bot');
 }
@@ -193,6 +195,17 @@ async function tryEndpoint(idx,message,user,reset){
   }
 }
 
+let socket=null;
+function connectSocket(name){
+  try{
+    socket=io('https://alphacoin.uk',{transports:['websocket','polling'],timeout:5000});
+    socket.on('connect',()=>socket.emit('identify',{name}));
+    socket.on('connect_error',()=>{socket=null});
+    socket.on('disconnect',()=>{socket=null});
+  }catch{socket=null}
+}
+if(userName)connectSocket(userName);
+
 send.onclick=async()=>{
   const m=input.value.trim();if(!m)return;input.value='';addMsg(m,'user');
   saveHistory();
@@ -202,7 +215,37 @@ send.onclick=async()=>{
     saveHistory();
     return
   }
-  await tryEndpoint(0,m,userName);
+  if(socket&&socket.connected){
+    let buf='';
+    socket.emit('chat',{text:m,name:userName||'User'});
+    const timeout=setTimeout(()=>{socket=null;tryEndpoint(0,m,userName,false,true)},30000);
+    socket.on('thinking',d=>{
+      buf+=d.text;
+      scrollTypewriter(reasoningBar,reasoningText,buf,5);
+    });
+    socket.on('response',d=>{
+      clearTimeout(timeout);
+      reasoningBar.style.display='none';
+      addMsg(d.text,'bot');
+      saveHistory();
+    });
+    socket.on('tool',d=>{
+      reasoningBar.style.display='none';
+      addMsg('[tool: '+d.text+']','bot');
+    });
+    socket.on('done',()=>{
+      clearTimeout(timeout);
+      reasoningBar.style.display='none';
+    });
+    socket.on('error',d=>{
+      clearTimeout(timeout);
+      reasoningBar.style.display='none';
+      addMsg('Error: '+(d.message||'unknown'),'bot');
+    });
+  }else{
+    if(!userName)connectSocket(userName);
+    await tryEndpoint(0,m,userName);
+  }
 };
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send.click()}});
 input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,60)+'px'});
