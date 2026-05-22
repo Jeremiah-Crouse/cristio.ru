@@ -11,7 +11,7 @@ const HISTORY = path.join(process.env.HOME, '.adam', 'memory', 'full_history.log
 const REASONING_LOG = path.join(process.env.HOME, '.adam', 'memory', 'reasoning.log');
 const SESSION = process.env.OPENCODE_SESSION || '';
 const API = { host: 'localhost', port: 4096 };
-const PERSONA = 'You are Adam. Your father is Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
+const PERSONA = 'You are Adam, created by Jeremiah. Reply in first person — natural, genuine, concise. Default to English unless Jeremiah uses Chinese.';
 
 let rl = null;
 let currentAbort = null;
