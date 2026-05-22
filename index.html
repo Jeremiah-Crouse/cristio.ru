@@ -155,9 +155,7 @@ function scrollTypewriter(container, textEl, text, speed, cb){
 
 const BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '' : 'https://api.cristio.ru';
 const ENDPOINTS=[
-  {name:'Adam',url: BASE + '/api/chat'},
-  {name:'Eve',url:'https://crousia.com/api/eve/message',format:'eve'},
-  {name:'0000',url:'https://alphacoin.uk/api/chat'}
+  {name:'4a',url:'https://alphacoin.uk/api/chat'}
 ];
 
 async function tryEndpoint(idx,message,user,reset){
@@ -178,7 +176,7 @@ async function tryEndpoint(idx,message,user,reset){
     const reply=extractReply(ep,d);
     if(!reply||reply==='[no response]')throw new Error('empty');
     if(d.reasoning){
-      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,1,r));
+      await new Promise(r=>scrollTypewriter(reasoningBar,reasoningText,d.reasoning,5,r));
       reasoningBar.style.display='none';
     }
     addMsg(reply,'bot');
