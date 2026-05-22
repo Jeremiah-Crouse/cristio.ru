@@ -107,6 +107,9 @@ btn.onclick=()=>{
   if(o){msgs.scrollTop=msgs.scrollHeight;if(!userName)showNamePrompt();else input.focus()}
 };
 function addMsg(t,who){const d=document.createElement('div');d.className=who;d.textContent=t;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
+function spinner(){const d=document.createElement('div');d.className='bot';d.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #555;border-top-color:#ff6b35;border-radius:50%;animation:spin .8s linear infinite;margin:4px 0"></span>';msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
+function spinnerCSS(){const s=document.createElement('style');s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(s)}
+spinnerCSS();
 
 function getHistory(){
   const els=msgs.querySelectorAll('.user,.bot');
@@ -187,11 +190,9 @@ async function tryEndpoint(idx,message,user,reset){
     saveHistory();
   }catch(e){
     if(!reset){
-      addMsg(ep.name+' is unreachable. Resetting...','bot');
       try{ await fetch('https://alphacoin.uk/api/reset'); }catch{}
       await tryEndpoint(idx,message,user,true);
     }else{
-      addMsg(ep.name+' is unreachable after reset.','bot');
       await tryEndpoint(idx+1,message,user);
     }
   }
@@ -212,7 +213,7 @@ document.getElementById('reset-btn').onclick=doReset;
 document.getElementById('upload-btn').onclick=()=>document.getElementById('file-input').click();
 document.getElementById('file-input').onchange=async function(){
   const file=this.files[0];if(!file)return;
-  addMsg('[uploading '+file.name+']','user');saveHistory();
+  const spin=spinner();
   // Compress image client-side
   let uploadFile=file;
   if(file.type.startsWith('image/')){
@@ -230,20 +231,20 @@ document.getElementById('file-input').onchange=async function(){
     const r=await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd});
     const d=await r.json();
     if(d.image_url){
-      const img=document.createElement('img');
-      img.src=d.image_url;img.style.maxWidth='100%';img.style.borderRadius='8px';img.style.margin='4px 0';
-      const wrapper=document.createElement('div');wrapper.className='bot';wrapper.appendChild(img);
-      msgs.appendChild(wrapper);msgs.scrollTop=msgs.scrollHeight;
-    }
+      spin.innerHTML='<img src="'+d.image_url+'" style="max-width:100%;border-radius:8px;margin:4px 0">';
+      msgs.scrollTop=msgs.scrollHeight;
+    }else{spin.remove()}
     if(d.response)addMsg(d.response,'bot');
     else if(d.description)addMsg(d.description,'bot');
     saveHistory();
-  }catch{addMsg('Upload failed.','bot')}
+  }catch{spin.remove()}
   this.value='';
 };
 async function doReset(){
-  addMsg('Resetting connection...','bot');
-  try{await fetch('https://alphacoin.uk/api/reset');addMsg('Reset done.','bot');}catch{addMsg('Reset failed.','bot')}
+  const btn=document.getElementById('reset-btn');
+  const orig=btn.textContent;btn.textContent='↻';btn.style.animation='spin .8s linear infinite';
+  try{await fetch('https://alphacoin.uk/api/reset');}catch{}
+  btn.textContent=orig;btn.style.animation='';
 }
 
 send.onclick=async()=>{
