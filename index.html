@@ -206,9 +206,15 @@ function connectSocket(name){
 }
 if(userName)connectSocket(userName);
 
+async function doReset(){
+  addMsg('Resetting connection...','bot');
+  try{await fetch('https://alphacoin.uk/api/reset',{method:'POST'});addMsg('Reset done.','bot');}catch{addMsg('Reset failed.','bot')}
+}
+
 send.onclick=async()=>{
   const m=input.value.trim();if(!m)return;input.value='';addMsg(m,'user');
   saveHistory();
+  if(/\[RESET\]/i.test(m)){doReset();return}
   if(/queen lo wren/i.test(m)){
     queen.style.display='block';
     addMsg('The land recognizes you, Queen Lo Wren.','bot');
