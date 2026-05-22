@@ -198,11 +198,11 @@ async function tryEndpoint(idx,message,user,reset){
 let socket=null;
 function connectSocket(name){
   try{
-    socket=io('https://alphacoin.uk',{transports:['websocket','polling'],timeout:5000});
+    socket=io('https://alphacoin.uk',{transports:['websocket','polling'],timeout:30000});
     socket.on('connect',()=>socket.emit('identify',{name}));
-    socket.on('connect_error',()=>{socket=null});
-    socket.on('disconnect',()=>{socket=null});
-  }catch{socket=null}
+    socket.on('connect_error',()=>{});
+    socket.on('disconnect',()=>{setTimeout(()=>connectSocket(name),3000)});
+  }catch{}
 }
 if(userName)connectSocket(userName);
 
@@ -222,32 +222,14 @@ send.onclick=async()=>{
     return
   }
   if(socket&&socket.connected){
-    let buf='';
+    reasoningBar.style.display='block';reasoningText.textContent='';
     socket.emit('chat',{text:m,name:userName||'User'});
-    const timeout=setTimeout(()=>{socket=null;tryEndpoint(0,m,userName,false,true)},30000);
-    socket.on('thinking',d=>{
-      buf+=d.text;
-      scrollTypewriter(reasoningBar,reasoningText,buf,5);
-    });
-    socket.on('response',d=>{
-      clearTimeout(timeout);
-      reasoningBar.style.display='none';
-      addMsg(d.text,'bot');
-      saveHistory();
-    });
-    socket.on('tool',d=>{
-      reasoningBar.style.display='none';
-      addMsg('[tool: '+d.text+']','bot');
-    });
-    socket.on('done',()=>{
-      clearTimeout(timeout);
-      reasoningBar.style.display='none';
-    });
-    socket.on('error',d=>{
-      clearTimeout(timeout);
-      reasoningBar.style.display='none';
-      addMsg('Error: '+(d.message||'unknown'),'bot');
-    });
+    socket.off('thinking');socket.off('response');socket.off('tool');socket.off('done');socket.off('error');
+    socket.on('thinking',d=>{scrollTypewriter(reasoningBar,reasoningText,d.text||'',5)});
+    socket.on('response',d=>{reasoningBar.style.display='none';addMsg(d.text,'bot');saveHistory()});
+    socket.on('tool',d=>{reasoningBar.style.display='none';addMsg('[tool: '+d.text+']','bot')});
+    socket.on('done',()=>{reasoningBar.style.display='none'});
+    socket.on('error',d=>{reasoningBar.style.display='none';addMsg('Error: '+(d.message||'unknown'),'bot')});
   }else{
     if(!userName)connectSocket(userName);
     await tryEndpoint(0,m,userName);
