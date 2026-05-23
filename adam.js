@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
 const http = require('http');
+const https = require('https');
 const fs = require('fs').promises;
 const path = require('path');
 const yjs = require('./yjs-client.js');
@@ -16,6 +17,21 @@ const PERSONA = 'You know who you are.';
 
 let rl = null;
 let currentAbort = null;
+const TG_TOKEN = process.env.TELEGRAM_TOKEN || '';
+const TG_CHAT = process.env.TELEGRAM_CHAT_ID || '';
+const TG_ALLOWED = (process.env.TELEGRAM_ALLOWED_USERS || '').split(',').map(s => s.trim()).filter(Boolean);
+
+function tgSend(text) {
+  if (!TG_TOKEN || !TG_CHAT) return;
+  const data = JSON.stringify({ chat_id: TG_CHAT, text: text.slice(0, 4000) });
+  const req = https.request({
+    hostname: 'api.telegram.org', path: `/bot${TG_TOKEN}/sendMessage`, method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+  }, () => {});
+  req.on('error', () => {});
+  req.write(data);
+  req.end();
+}
 
 function api(method, pathname, body, onReq) {
   return new Promise((resolve, reject) => {
@@ -81,6 +97,18 @@ async function handleInput(input, source = 'terminal') {
   let streamEnded = false;
   let sawReasoning = false;
   let insertedSep = false;
+  let tgBuf = '';
+  let tgTimer = null;
+
+  function tgFlush() {
+    if (tgBuf.trim()) { tgSend(tgBuf.trim()); tgBuf = ''; }
+    tgTimer = null;
+  }
+  function tgAccum(text) {
+    tgBuf += text;
+    if (tgTimer) clearTimeout(tgTimer);
+    tgTimer = setTimeout(tgFlush, 1500);
+  }
 
   // Subscribe to SSE for live deltas
   function subscribeSSE() {
@@ -120,6 +148,7 @@ async function handleInput(input, source = 'terminal') {
                 }
                 responseAccum += props.delta;
                 if (source === 'terminal') process.stdout.write('\x1b[34m' + props.delta + '\x1b[0m');
+                tgAccum(props.delta);
               }
             }
           } catch {}
@@ -140,6 +169,7 @@ async function handleInput(input, source = 'terminal') {
   });
 
   streamEnded = true;
+  if (tgTimer) { clearTimeout(tgTimer); tgFlush(); }
 
   if (thinkingAccum.trim()) {
     fs.appendFile(REASONING_LOG, `[${new Date().toISOString()}]\n${thinkingAccum.trim()}\n\n`).catch(() => {});
