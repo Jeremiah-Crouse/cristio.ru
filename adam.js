@@ -28,13 +28,13 @@ function saveOffset() {
   try { require('fs').writeFileSync(TG_OFFSET_FILE, String(tgLastUpdate)); } catch {}
 }
 
-function tgPoll() {
+async function tgPoll() {
   if (!TG_TOKEN) return;
   const url = `https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${tgLastUpdate + 1}&timeout=10`;
   https.get(url, (res) => {
     let buf = '';
     res.on('data', d => buf += d);
-    res.on('end', () => {
+    res.on('end', async () => {
       try {
         const data = JSON.parse(buf);
         if (data.ok && data.result) {
@@ -43,7 +43,7 @@ function tgPoll() {
             const msg = update.message?.text;
             const chatId = update.message?.chat?.id;
             if (msg && TG_CHAT && String(chatId) === String(TG_CHAT)) {
-              handleInput(msg.trim(), 'telegram');
+              await handleInput(msg.trim(), 'telegram');
             }
           }
         }
