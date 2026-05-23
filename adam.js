@@ -36,8 +36,8 @@ function tgPoll() {
           for (const update of data.result) {
             if (update.update_id > tgLastUpdate) tgLastUpdate = update.update_id;
             const msg = update.message?.text;
-            const from = update.message?.from?.id;
-            if (msg && TG_CHAT && String(from) === String(TG_CHAT)) {
+            const chatId = update.message?.chat?.id;
+            if (msg && TG_CHAT && String(chatId) === String(TG_CHAT)) {
               handleInput(msg.trim(), 'telegram');
             }
           }
