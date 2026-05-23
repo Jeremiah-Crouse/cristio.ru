@@ -45,6 +45,12 @@ function append(text) {
 function insertAt(pos, text) {
   if (ytext) ytext.insert(pos, text);
 }
+function deleteRange(pos, len) {
+  if (ytext) ytext.delete(pos, len);
+}
+function replaceRange(pos, del, text) {
+  if (ytext) { ytext.delete(pos, del); if (text) ytext.insert(pos, text); }
+}
 function ylength() { return ytext ? ytext.length : 0; }
 
 function setCursor(pos) {
@@ -73,4 +79,4 @@ function disconnect() {
   connected = false;
 }
 
-module.exports = { connect, getText, getLength, ylength, append, insertAt, setCursor, setSelection, getOthersCursor, disconnect };
+module.exports = { connect, getText, getLength, ylength, append, insertAt, delete: deleteRange, replace: replaceRange, setCursor, setSelection, getOthersCursor, disconnect };
