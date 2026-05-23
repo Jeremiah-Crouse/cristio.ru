@@ -24,6 +24,8 @@ const TG_ALLOWED = (process.env.TELEGRAM_ALLOWED_USERS || '').split(',').map(s =
 const TG_OFFSET_FILE = '/tmp/tg-last-update';
 let tgLastUpdate = (() => { try { return Number(require('fs').readFileSync(TG_OFFSET_FILE, 'utf8')) || 0; } catch { return 0; } })();
 
+const processedUpdates = new Set();
+
 function saveOffset() {
   try { require('fs').writeFileSync(TG_OFFSET_FILE, String(tgLastUpdate)); } catch {}
 }
@@ -31,26 +33,41 @@ function saveOffset() {
 async function tgPoll() {
   if (!TG_TOKEN) return;
   const url = `https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${tgLastUpdate + 1}&timeout=10`;
-  https.get(url, (res) => {
-    let buf = '';
-    res.on('data', d => buf += d);
-    res.on('end', async () => {
-      try {
-        const data = JSON.parse(buf);
-        if (data.ok && data.result) {
-          for (const update of data.result) {
-            if (update.update_id > tgLastUpdate) { tgLastUpdate = update.update_id; saveOffset(); }
-            const msg = update.message?.text;
-            const chatId = update.message?.chat?.id;
-            if (msg && TG_CHAT && String(chatId) === String(TG_CHAT)) {
-              await handleInput(msg.trim(), 'telegram');
+
+  await new Promise((resolve) => {
+    https.get(url, (res) => {
+      let buf = '';
+      res.on('data', d => buf += d);
+      res.on('end', async () => {
+        try {
+          const data = JSON.parse(buf);
+          if (data.ok && data.result) {
+            for (const update of data.result) {
+              if (update.update_id > tgLastUpdate) {
+                tgLastUpdate = update.update_id;
+                saveOffset();
+              }
+              const msg = update.message?.text;
+              const chatId = update.message?.chat?.id;
+              if (msg && TG_CHAT && String(chatId) === String(TG_CHAT)) {
+                if (!processedUpdates.has(update.update_id)) {
+                  processedUpdates.add(update.update_id);
+                  if (processedUpdates.size > 100) {
+                    const oldest = [...processedUpdates].slice(0, 50);
+                    oldest.forEach(id => processedUpdates.delete(id));
+                  }
+                  await handleInput(msg.trim(), 'telegram');
+                }
+              }
             }
           }
-        }
-      } catch {}
-      setTimeout(tgPoll, 5000);
-    });
-  }).on('error', () => { setTimeout(tgPoll, 5000); });
+        } catch {}
+        resolve();
+      });
+    }).on('error', () => resolve());
+  });
+
+  setTimeout(tgPoll, 5000);
 }
 
 function tgSend(text) {
@@ -142,7 +159,6 @@ async function handleInput(input, source = 'terminal') {
   let thinkingAccum = '';
   let responseAccum = '';
   let sessId = SESSION;
-  let messageSent = false;
   let streamEnded = false;
   let sawReasoning = false;
   let insertedSep = false;
