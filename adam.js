@@ -105,10 +105,6 @@ async function ensureServe() {
   }
   console.error('❌ Server failed'); process.exit(1);
 }
-    console.error('❌ Server failed'); process.exit(1);
-  }
-  console.log('✅ Server already running');
-}
 
 async function log(entry) {
   await fs.appendFile(HISTORY, `[${new Date().toISOString()}] ${entry}\n`).catch(() => {});
