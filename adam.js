@@ -12,7 +12,7 @@ dotenv.config();
 const HISTORY = path.join(process.env.HOME, '.adam', 'memory', 'full_history.log');
 const REASONING_LOG = path.join(process.env.HOME, '.adam', 'memory', 'reasoning.log');
 const SESSION = process.env.OPENCODE_SESSION || '';
-const API = { host: 'localhost', port: 4096 };
+const API = { host: '127.0.0.1', port: 4096 };
 const PERSONA = 'You know who you are.';
 
 let rl = null;
