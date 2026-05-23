@@ -21,7 +21,8 @@ const TG_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const TG_CHAT = process.env.TELEGRAM_CHAT_ID || '';
 const TG_ALLOWED = (process.env.TELEGRAM_ALLOWED_USERS || '').split(',').map(s => s.trim()).filter(Boolean);
 
-let tgLastUpdate = 0;
+const TG_OFFSET_FILE = path.join(process.env.HOME || '/tmp', '.adam', '.tg-offset');
+let tgLastUpdate = (() => { try { return Number(require('fs').readFileSync(TG_OFFSET_FILE, 'utf8')) || 0; } catch { return 0; } })();
 
 function tgPoll() {
   if (!TG_TOKEN) return;
@@ -34,7 +35,7 @@ function tgPoll() {
         const data = JSON.parse(buf);
         if (data.ok && data.result) {
           for (const update of data.result) {
-            if (update.update_id > tgLastUpdate) tgLastUpdate = update.update_id;
+            if (update.update_id > tgLastUpdate) { tgLastUpdate = update.update_id; require('fs').writeFileSync(TG_OFFSET_FILE, String(tgLastUpdate)); }
             const msg = update.message?.text;
             const chatId = update.message?.chat?.id;
             if (msg && TG_CHAT && String(chatId) === String(TG_CHAT)) {
@@ -114,6 +115,8 @@ async function handleInput(input, source = 'terminal') {
   if (input.includes('[RESTART]') || input.trim() === '[RESTART]') {
     console.log('\n🔄 [Adam restarting]...\n');
     await log('[Adam restarted by user]').catch(() => {});
+    if (source === 'telegram') tgSend('[RESTART acknowledged, rebooting...]');
+    require('fs').writeFileSync(TG_OFFSET_FILE, String(tgLastUpdate));
     try { require('child_process').execSync('fuser -k 4096/tcp 2>/dev/null; kill $(ss -tlnp | grep :4096 | grep -oP "(?<=pid=)\\d+") 2>/dev/null; lsof -ti:4096 | xargs kill -9 2>/dev/null; true'); } catch {}
     process.exit(42);
   }
