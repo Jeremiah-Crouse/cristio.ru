@@ -48,8 +48,9 @@ function tgPoll() {
           }
         }
       } catch {}
+      setTimeout(tgPoll, 5000);
     });
-  }).on('error', () => {});
+  }).on('error', () => { setTimeout(tgPoll, 5000); });
 }
 
 function tgSend(text) {
@@ -250,7 +251,7 @@ async function main() {
     });
   } catch {}
 
-  if (TG_TOKEN) { setInterval(tgPoll, 5000); console.log('📱 Telegram active'); }
+  if (TG_TOKEN) { setTimeout(tgPoll, 100); console.log('📱 Telegram active'); }
 
   console.log(`\n🧠 Adam via serve (session ${SESSION})`);
   console.log('💬 Type exit to sleep.\n');
