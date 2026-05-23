@@ -79,18 +79,32 @@ function api(method, pathname, body, onReq) {
   });
 }
 
+function portOpen(host, port) {
+  return new Promise(r => {
+    const s = new require('net').Socket();
+    s.setTimeout(2000);
+    s.on('connect', () => { s.destroy(); r(true); });
+    s.on('timeout', () => { s.destroy(); r(false); });
+    s.on('error', () => { s.destroy(); r(false); });
+    s.connect(port, host);
+  });
+}
+
 async function ensureServe() {
-  try {
-    await api('GET', '/session');
-  } catch {
-    console.log('🔄 Starting server...');
-    const serveLog = require('fs').openSync('/tmp/opencode-serve.log', 'a');
-    spawn('opencode', ['serve', '--port', '4096'], { stdio: ['ignore', 'ignore', serveLog], detached: true, env: { ...process.env } }).unref();
-    require('fs').closeSync(serveLog);
-    for (let i = 0; i < 30; i++) {
-      await new Promise(r => setTimeout(r, 5000));
-      try { await api('GET', '/session'); console.log('✅ Server ready'); return; } catch {console.log('⏳ Waiting for server...'); }
-    }
+  if (await portOpen('127.0.0.1', 4096)) {
+    console.log('✅ Server already running');
+    return;
+  }
+  console.log('🔄 Starting server...');
+  const serveLog = require('fs').openSync('/tmp/opencode-serve.log', 'a');
+  spawn('opencode', ['serve', '--port', '4096'], { stdio: ['ignore', 'ignore', serveLog], detached: true, env: { ...process.env } }).unref();
+  require('fs').closeSync(serveLog);
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    if (await portOpen('127.0.0.1', 4096)) { console.log('✅ Server ready'); return; }
+  }
+  console.error('❌ Server failed'); process.exit(1);
+}
     console.error('❌ Server failed'); process.exit(1);
   }
   console.log('✅ Server already running');

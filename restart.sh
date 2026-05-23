@@ -1,5 +1,6 @@
 #!/bin/bash
-kill $(lsof -ti :3000) 2>/dev/null
+fuser -k 3000/tcp 2>/dev/null; fuser -k 4096/tcp 2>/dev/null
+kill $(lsof -ti :3000) 2>/dev/null; kill $(lsof -ti :4096) 2>/dev/null
 kill $(pgrep -f "cloudflared.*cristio") 2>/dev/null
 sleep 1
 
