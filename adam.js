@@ -3,6 +3,7 @@ const { spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs').promises;
 const path = require('path');
+const yjs = require('./yjs-client.js');
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -164,6 +165,13 @@ async function main() {
     process.exit(0);
   });
 
+  // Connect to shared Yjs document
+  try {
+    yjs.connect('ws://localhost:1234', 'crousia-shared-room', () => {
+      console.log('📝 Connected to shared document');
+    });
+  } catch {}
+
   console.log(`\n🧠 Adam via serve (session ${SESSION})`);
   console.log('💬 Type exit to sleep.\n');
 
@@ -177,6 +185,21 @@ async function main() {
       await log('[Session ended]');
       rl?.close();
       process.exit(0);
+      return;
+    }
+    // Yjs commands
+    if (input.toLowerCase() === 'ysl read') {
+      console.log('\n📄 Shared document content:\n');
+      console.log(yjs.getText() || '(empty)');
+      console.log();
+      rl.prompt();
+      return;
+    }
+    if (input.toLowerCase() === 'ysl status') {
+      console.log('\n📝 Yjs status:', yjs.provider ? (yjs.provider.wsconnected ? 'connected' : 'disconnected') : 'not initialized');
+      console.log('📄 Doc length:', (yjs.getText() || '').length);
+      console.log();
+      rl.prompt();
       return;
     }
     rl.pause();
