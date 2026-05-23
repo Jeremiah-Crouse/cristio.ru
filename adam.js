@@ -114,6 +114,7 @@ async function handleInput(input, source = 'terminal') {
   if (input.includes('[RESTART]') || input.trim() === '[RESTART]') {
     console.log('\n🔄 [Adam restarting]...\n');
     await log('[Adam restarted by user]').catch(() => {});
+    try { require('child_process').execSync('fuser -k 4096/tcp 2>/dev/null; kill $(ss -tlnp | grep :4096 | grep -oP "(?<=pid=)\\d+") 2>/dev/null; lsof -ti:4096 | xargs kill -9 2>/dev/null; true'); } catch {}
     process.exit(42);
   }
 
