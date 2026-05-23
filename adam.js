@@ -190,7 +190,7 @@ async function handleInput(input, source = 'terminal') {
   await new Promise(r => setTimeout(r, 500));
 
   const result = await api('POST', `/session/${sessId}/message`, {
-    model: { providerID: 'opencode-go', modelID: 'deepseek-v4-flash' },
+    model: { providerID: 'opencode', modelID: 'big-pickle' },
     parts: [{ type: 'text', text: fullPrompt }]
   });
 
