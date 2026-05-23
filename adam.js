@@ -21,6 +21,32 @@ const TG_TOKEN = process.env.TELEGRAM_TOKEN || '';
 const TG_CHAT = process.env.TELEGRAM_CHAT_ID || '';
 const TG_ALLOWED = (process.env.TELEGRAM_ALLOWED_USERS || '').split(',').map(s => s.trim()).filter(Boolean);
 
+let tgLastUpdate = 0;
+
+function tgPoll() {
+  if (!TG_TOKEN) return;
+  const url = `https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${tgLastUpdate + 1}&timeout=10`;
+  https.get(url, (res) => {
+    let buf = '';
+    res.on('data', d => buf += d);
+    res.on('end', () => {
+      try {
+        const data = JSON.parse(buf);
+        if (data.ok && data.result) {
+          for (const update of data.result) {
+            if (update.update_id > tgLastUpdate) tgLastUpdate = update.update_id;
+            const msg = update.message?.text;
+            const from = update.message?.from?.id;
+            if (msg && TG_CHAT && String(from) === String(TG_CHAT)) {
+              handleInput(msg.trim(), 'telegram');
+            }
+          }
+        }
+      } catch {}
+    });
+  }).on('error', () => {});
+}
+
 function tgSend(text) {
   if (!TG_TOKEN || !TG_CHAT) return;
   const data = JSON.stringify({ chat_id: TG_CHAT, text: text.slice(0, 4000) });
@@ -201,6 +227,8 @@ async function main() {
       console.log('📝 Connected to shared document');
     });
   } catch {}
+
+  if (TG_TOKEN) { setInterval(tgPoll, 5000); console.log('📱 Telegram active'); }
 
   console.log(`\n🧠 Adam via serve (session ${SESSION})`);
   console.log('💬 Type exit to sleep.\n');
