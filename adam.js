@@ -87,8 +87,8 @@ async function ensureServe() {
     const serveLog = require('fs').openSync('/tmp/opencode-serve.log', 'a');
     spawn('opencode', ['serve', '--port', '4096'], { stdio: ['ignore', 'ignore', serveLog], detached: true, env: { ...process.env } }).unref();
     require('fs').closeSync(serveLog);
-    for (let i = 0; i < 120; i++) {
-      await new Promise(r => setTimeout(r, 1000));
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 5000));
       try { await api('GET', '/session'); console.log('✅ Server ready'); return; } catch {}
     }
     console.error('❌ Server failed'); process.exit(1);
