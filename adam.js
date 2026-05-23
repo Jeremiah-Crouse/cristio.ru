@@ -188,10 +188,24 @@ async function main() {
       return;
     }
     // Yjs commands
-    if (input.toLowerCase() === 'ysl read') {
-      console.log('\n📄 Shared document content:\n');
-      console.log(yjs.getText() || '(empty)');
+    if (input.toLowerCase() === 'ysl read' || input.toLowerCase() === 'ysl') {
+      console.log('\n📄 Document (' + (yjs.getLength() || 0) + ' chars):\n');
+      console.log((yjs.getText() || '(empty)').slice(0, 2000));
       console.log();
+      rl.prompt();
+      return;
+    }
+    if (input.match(/^ysl append /i)) {
+      const text = input.slice(11);
+      yjs.append(text);
+      console.log('✅ Appended ' + text.length + ' chars');
+      rl.prompt();
+      return;
+    }
+    if (input.match(/^ysl say /i)) {
+      const text = input.slice(8);
+      yjs.append('\n' + text);
+      console.log('✅ Added message');
       rl.prompt();
       return;
     }

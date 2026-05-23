@@ -36,19 +36,18 @@ function connect(url, room, onConnect) {
   return { ydoc, provider, ytext, ychat, awareness: myAwareness };
 }
 
-// Lexical editor — handles formatted content (READ ONLY for agents)
-function getEditorContent() { return ytext ? ytext.toString() : ''; }
-
-// Agent chat — agents write here instead of the editor
-function getChatLog() { return ychat ? ychat.toJSON() : []; }
-function addChatMessage(sender, msg) {
-  if (ychat) ychat.push([{ sender, msg, time: Date.now() }]);
-}
-function clearChat() { if (ychat) ychat.delete(0, ychat.length); }
-
-// Legacy: direct text ops (use carefully — may corrupt Lexical state)
+// Content ops — work with the shared Lexical document
 function getText() { return ytext ? ytext.toString() : ''; }
 function getLength() { return ytext ? ytext.length : 0; }
+function append(text) {
+  if (ytext) ytext.insert(ytext.length, '\n\n' + text);
+}
+function prepend(text) {
+  if (ytext) ytext.insert(0, text + '\n\n');
+}
+function insertAt(pos, text) {
+  if (ytext) ytext.insert(pos, text);
+}
 
 function setCursor(pos) {
   if (myAwareness) {
@@ -76,4 +75,4 @@ function disconnect() {
   connected = false;
 }
 
-module.exports = { connect, getEditorContent, getChatLog, addChatMessage, clearChat, getText, getLength, setCursor, setSelection, getOthersCursor, disconnect };
+module.exports = { connect, getText, getLength, append, prepend, insertAt, setCursor, setSelection, getOthersCursor, disconnect };
