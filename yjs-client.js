@@ -40,14 +40,12 @@ function connect(url, room, onConnect) {
 function getText() { return ytext ? ytext.toString() : ''; }
 function getLength() { return ytext ? ytext.length : 0; }
 function append(text) {
-  if (ytext) ytext.insert(ytext.length, '\n\n' + text);
-}
-function prepend(text) {
   if (ytext) ytext.insert(0, text + '\n\n');
 }
 function insertAt(pos, text) {
   if (ytext) ytext.insert(pos, text);
 }
+function ylength() { return ytext ? ytext.length : 0; }
 
 function setCursor(pos) {
   if (myAwareness) {
@@ -75,4 +73,4 @@ function disconnect() {
   connected = false;
 }
 
-module.exports = { connect, getText, getLength, append, prepend, insertAt, setCursor, setSelection, getOthersCursor, disconnect };
+module.exports = { connect, getText, getLength, ylength, append, insertAt, setCursor, setSelection, getOthersCursor, disconnect };
