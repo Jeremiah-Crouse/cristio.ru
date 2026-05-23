@@ -89,7 +89,7 @@ async function ensureServe() {
     require('fs').closeSync(serveLog);
     for (let i = 0; i < 30; i++) {
       await new Promise(r => setTimeout(r, 5000));
-      try { await api('GET', '/session'); console.log('✅ Server ready'); return; } catch {}
+      try { await api('GET', '/session'); console.log('✅ Server ready'); return; } catch {console.log('⏳ Waiting for server...'); }
     }
     console.error('❌ Server failed'); process.exit(1);
   }
