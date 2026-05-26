@@ -80,9 +80,10 @@ export default function AdamChat() {
             <div style={{padding:'1rem',borderTop:'1px solid #333',display:'flex',flexDirection:'column',gap:'0.5rem'}}>
               <div style={{color:'#888',fontSize:'0.85rem'}}>What should I call you?</div>
               <div style={{display:'flex',gap:'0.5rem'}}>
-                <input onKeyDown={e => { if(e.key==='Enter') { const v=e.target.value.trim(); if(v) { setUserName(v); localStorage.setItem('cristio_user_name',v); setShowName(false); connectSocket(v); }}}}
+                <input id="adam-name-input" onKeyDown={e => { if(e.key==='Enter') { const v=e.target.value.trim(); if(v) { setUserName(v); localStorage.setItem('cristio_user_name',v); setShowName(false); connectSocket(v); }}}}
                   style={{flex:1,padding:'0.5rem',background:'#333',border:'1px solid #555',borderRadius:'4px',color:'#fff',outline:'none'}} />
-                <button onClick={() => setShowName(false)} style={{padding:'0.5rem 1rem',background:'#555',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>Go</button>
+                <button onClick={() => { const v = document.getElementById('adam-name-input')?.value?.trim(); if(v) { setUserName(v); localStorage.setItem('cristio_user_name',v); setShowName(false); connectSocket(v); }}}
+                  style={{padding:'0.5rem 1rem',background:'#555',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>Go</button>
               </div>
             </div>
           )}
