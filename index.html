@@ -360,17 +360,22 @@ dsBtn.onclick=()=>{
   dsBtn.textContent=o?'×':'+';
   if(o){dsMsgs.scrollTop=dsMsgs.scrollHeight;if(!dsUserName)dsNameWrap.style.display='flex';else dsInput.focus()}
 };
-dsReset.onclick=()=>{dsMsgs.innerHTML='';addDsMsg('Da She reset.','bot')};
-dsNameGo.onclick=()=>{const n=dsNameInput.value.trim();if(n){dsUserName=n;localStorage.setItem(DS_NAME_KEY,n);dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'. Da She is here.','bot')}};
-dsNameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=dsNameInput.value.trim();if(n){dsUserName=n;localStorage.setItem(DS_NAME_KEY,n);dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'. Da She is here.','bot')}}});
+dsReset.onclick=()=>{dsMsgs.innerHTML='';addDsMsg('Reset.','bot')};
+dsNameGo.onclick=()=>{const n=dsNameInput.value.trim();if(n){dsUserName=n;localStorage.setItem(DS_NAME_KEY,n);dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'.','bot')}};
+dsNameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=dsNameInput.value.trim();if(n){dsUserName=n;localStorage.setItem(DS_NAME_KEY,n);dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'.','bot')}}});
 dsUploadBtn.onclick=()=>dsFileInput.click();
 dsFileInput.onchange=async function(){
   const file=this.files[0];if(!file)return;
   const spin=dsSpinner();
   try{
     const fd=new FormData();fd.append('file',file);fd.append('name',dsUserName||'User');fd.append('message','');
-    await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd});
-    addDsMsg('[Image uploaded]','bot');
+    const r=await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd});
+    const d=await r.json();
+    if(d.image_url){
+      await fetch(NTFY_URL+'/'+NTFY_TOPIC,{method:'POST',body:'[Image] '+d.image_url});
+    }
+    spin.remove();
+    if(d.description)addDsMsg(d.description,'bot');
   }catch(e){spin.remove();addDsMsg('Upload failed','bot')}
   this.value='';
 };
