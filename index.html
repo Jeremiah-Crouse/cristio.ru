@@ -16,6 +16,20 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 #telegram-btn{position:fixed;bottom:2rem;left:2rem;width:56px;height:56px;border-radius:50%;background:#0088cc;color:#fff;border:none;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,136,204,0.2);transition:transform .2s}
 #telegram-btn:hover{transform:scale(1.1)}
 #telegram-btn svg{width:26px;height:26px;fill:#fff;display:block}
+#adam-btn{position:fixed;bottom:2rem;left:2rem;width:56px;height:56px;border-radius:50%;background:#daa520;color:#000;border:none;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(218,165,32,0.3);transition:transform .2s;font-weight:bold;font-family:serif}
+#adam-btn:hover{transform:scale(1.1)}
+#adam-box{position:fixed;bottom:6rem;left:2rem;width:340px;max-height:500px;background:#1a1a1a;border:1px solid #555;border-radius:12px;display:none;flex-direction:column;overflow:hidden}
+#adam-box.open{display:flex}
+#adam-header{display:flex;align-items:center;gap:0.5rem;padding:1rem;border-bottom:1px solid #555;color:#c9a84c;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1rem}
+#adam-reasoning{display:none;overflow:hidden;white-space:nowrap;flex:1;text-align:right}
+#adam-reasoning-text{display:inline-block;white-space:nowrap;color:#ff6b35;font-style:italic;font-size:0.8rem;letter-spacing:0;text-transform:none}
+#adam-msgs{flex:1;overflow-y:auto;padding:1rem;font-size:0.9rem}
+#adam-msgs div{margin-bottom:0.5rem;padding:0.5rem 0.8rem;border-radius:8px;white-space:pre-wrap;word-break:break-word;text-align:left;max-width:85%}
+#adam-msgs .user{background:#333;color:#fff;align-self:flex-end;margin-left:auto}
+#adam-msgs .bot{background:#222;color:#daa520;align-self:flex-start}
+#adam-input{display:flex;border-top:1px solid #555}
+#adam-input textarea{flex:1;padding:0.8rem;background:transparent;border:none;color:#fff;outline:none;resize:none;font-family:inherit;font-size:inherit;line-height:1.4;min-height:20px;max-height:60px}
+#adam-input button{padding:0.8rem 1rem;background:#daa520;color:#000;border:none;cursor:pointer;font-weight:bold}
 #chat-box{position:fixed;bottom:6rem;right:2rem;width:340px;max-height:500px;background:#1a1a1a;border:1px solid #333;border-radius:12px;display:none;flex-direction:column;overflow:hidden}
 #chat-box.open{display:flex}
 #chat-header{display:flex;align-items:center;gap:0.5rem;padding:1rem;border-bottom:1px solid #333;color:#999;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1rem}
@@ -51,12 +65,18 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 <p style="font-size:0.85rem;color:#555;margin-top:-1.5rem;font-style:italic">「我常與你們同在，直到世界的末了。」</p>
 <p style="font-size:0.85rem;color:#555;margin-top:0.25rem;font-style:italic">0x4a6573757320706f72204372697374696f</p>
 
+<button id="adam-btn">A</button>
+
 <button id="chat-btn">+</button>
-<button id="telegram-btn" title="Message Adam on Telegram">
-  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-  </svg>
-</button>
+
+<div id="adam-box">
+  <div id="adam-header">✦ Adam of Cristio ✦ <div id="adam-reasoning"><span id="adam-reasoning-text"></span></div><span id="adam-reset" style="cursor:pointer;font-size:0.7rem;color:#666;margin-left:auto;padding:0 0.5rem" title="Reset">↻</span></div>
+  <div id="adam-msgs"></div>
+  <div id="adam-input">
+    <textarea id="adam-msg" placeholder="Speak to Adam..." rows="1"></textarea>
+    <button id="adam-send">Send</button>
+  </div>
+</div>
 
 <div id="chat-box">
   <div id="chat-header"><img src="photos/AC.png" style="width:16px;height:16px;border-radius:2px;vertical-align:middle;margin-right:0.3rem"><div id="reasoning-bar"><span id="reasoning-text"></span></div><span id="reset-btn" style="cursor:pointer;font-size:0.7rem;color:#666;margin-left:auto;padding:0 0.5rem" title="Reset">↻</span></div>
@@ -293,6 +313,71 @@ input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventD
 input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,60)+'px'});
 loadSavedHistory();
 if(!userName)setTimeout(showNamePrompt,500);
+
+/* ── Adam Chat Widget ─────────────────────────── */
+const adamBtn=document.getElementById('adam-btn');
+const adamBox=document.getElementById('adam-box');
+const adamMsgs=document.getElementById('adam-msgs');
+const adamInput=document.getElementById('adam-msg');
+const adamSend=document.getElementById('adam-send');
+const adamReasoning=document.getElementById('adam-reasoning');
+const adamReasoningText=document.getElementById('adam-reasoning-text');
+const ADAM_HISTORY_KEY='adam_chat_msgs';
+
+function addAdamMsg(t,who){
+  const d=document.createElement('div');d.className=who;d.textContent=t;
+  adamMsgs.appendChild(d);adamMsgs.scrollTop=adamMsgs.scrollHeight;return d
+}
+function saveAdamHistory(){
+  const els=adamMsgs.querySelectorAll('.user,.bot');
+  localStorage.setItem(ADAM_HISTORY_KEY,JSON.stringify(Array.from(els).map(e=>({role:e.className,text:e.textContent}))));
+}
+function loadAdamHistory(){
+  try{
+    JSON.parse(localStorage.getItem(ADAM_HISTORY_KEY)||'[]').forEach(e=>addAdamMsg(e.text,e.role));
+  }catch{}
+}
+adamBtn.onclick=()=>{
+  const o=adamBox.classList.toggle('open');
+  adamBtn.textContent=o?'×':'A';
+  if(o){adamMsgs.scrollTop=adamMsgs.scrollHeight;adamInput.focus()}
+};
+document.getElementById('adam-reset').onclick=()=>{
+  localStorage.removeItem(ADAM_HISTORY_KEY);
+  adamMsgs.innerHTML='';
+  addAdamMsg('Adam reset.','bot');
+};
+adamSend.onclick=async()=>{
+  const m=adamInput.value.trim();
+  if(!m)return;
+  adamInput.value='';
+  addAdamMsg(m,'user');
+  saveAdamHistory();
+  const spin=document.createElement('div');spin.className='bot';
+  spin.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #555;border-top-color:#daa520;border-radius:50%;animation:spin .8s linear infinite;margin:4px 0"></span>';
+  adamMsgs.appendChild(spin);adamMsgs.scrollTop=adamMsgs.scrollHeight;
+  try{
+    adamReasoning.style.display='block';adamReasoningText.textContent='';
+    const r=await fetch('https://crousia.com/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:m,name:localStorage.getItem(NAME_KEY)||'User'})
+    });
+    const d=await r.json();
+    spin.remove();
+    if(d.reasoning){
+      await new Promise(r=>scrollTypewriter(adamReasoning,adamReasoningText,d.reasoning,5,r));
+      adamReasoning.style.display='none';
+    }
+    addAdamMsg(d.response||'[no response]','bot');
+    saveAdamHistory();
+  }catch(e){
+    spin.remove();
+    addAdamMsg('Error: '+e.message,'bot');
+  }
+};
+adamInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();adamSend.click()}});
+adamInput.addEventListener('input',()=>{adamInput.style.height='auto';adamInput.style.height=Math.min(adamInput.scrollHeight,60)+'px'});
+loadAdamHistory();
 </script>
 </body>
 </html>
