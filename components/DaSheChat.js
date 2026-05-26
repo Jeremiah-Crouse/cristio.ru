@@ -9,8 +9,9 @@ export default function DaSheChat() {
   const [msgs, setMsgs] = useState([]);
   const [userName, setUserName] = useState(null);
   const [showName, setShowName] = useState(false);
+  const [thinking, setThinking] = useState(false);
   const inputRef = useRef(null);
-  const msgsRef = useRef(null);
+  const thinkingRef = useRef(null);
   const lastSentRef = useRef('');
 
   useEffect(() => {
@@ -33,12 +34,40 @@ export default function DaSheChat() {
     return () => evt.close();
   }, [open]);
 
+  // QRNG thinking effect
+  const showThinking = async () => {
+    setThinking(true);
+    try {
+      const r = await fetch('/api/qrng?length=42&format=HEX');
+      const d = await r.json();
+      const hex = d.qrn || '';
+      const bits = hex.split('').map(c => (parseInt(c, 16) % 2).toString()).join('');
+      const el = thinkingRef.current;
+      if (!el) return;
+      el.textContent = '';
+      el.style.display = 'block';
+      const bw = Math.ceil(el.clientWidth / 7);
+      const display = bits.slice(0, bw);
+      for (let i = 0; i < display.length; i++) {
+        el.textContent += display[i];
+        await new Promise(r => setTimeout(r, 80));
+        const cw = el.clientWidth;
+        const sw = el.scrollWidth;
+        if (sw > cw) el.textContent = el.textContent.slice(1);
+      }
+      await new Promise(r => setTimeout(r, 1500));
+    } catch {}
+    el.textContent = '';
+    setThinking(false);
+  };
+
   const send = async () => {
     const m = inputRef.current?.value?.trim();
     if (!m) return;
     inputRef.current.value = '';
     lastSentRef.current = m;
     setMsgs(prev => [...prev, { text: m, who: 'user' }]);
+    await showThinking();
     try {
       await fetch(`${NTFY_URL}/${NTFY_TOPIC}`, { method: 'POST', body: m });
     } catch {}
@@ -48,88 +77,88 @@ export default function DaSheChat() {
     setUserName(n);
     localStorage.setItem(DS_NAME_KEY, n);
     setShowName(false);
-    setMsgs(prev => [...prev, { text: `Hello, ${n}.`, who: 'bot' }]);
   };
 
   return (
     <>
-      <button onClick={() => setOpen(!open)} style={{
-        position: 'fixed', bottom: '2rem', left: '2rem',
-        width: '56px', height: '56px', borderRadius: '50%',
-        background: '#fff', color: '#000', border: 'none',
-        fontSize: '1.5rem', cursor: 'pointer',
-        boxShadow: '0 4px 20px rgba(255,255,255,0.1)',
-        zIndex: 1001
-      }}>
+      <button onClick={() => setOpen(!open)} style={btnStyle}>
         {open ? '×' : '+'}
       </button>
       {open && (
-        <div style={{
-          position: 'fixed', bottom: '6rem', left: '2rem',
-          width: '340px', maxHeight: '500px',
-          background: '#1a1a1a', border: '1px solid #333',
-          borderRadius: '12px', display: 'flex', flexDirection: 'column',
-          overflow: 'hidden', zIndex: 1000
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            padding: '1rem', borderBottom: '1px solid #333',
-            color: '#999', fontSize: '0.85rem', textTransform: 'uppercase'
-          }}>
+        <div style={boxStyle}>
+          <div style={headerStyle}>
             <span style={{display:'inline-block',transform:'scaleX(-1)'}}>🐍</span>
-            <div style={{flex:1}} />
+            <span ref={thinkingRef} style={{
+              display:'none', fontFamily:'Courier New,monospace', color:'#c4b998',
+              fontSize:'0.7rem', letterSpacing:'2px', overflow:'hidden',
+              whiteSpace:'nowrap', flex:1, textAlign:'right', opacity:0.6,
+              textShadow:'0 0 8px rgba(196,185,152,0.3)'
+            }} />
             <span onClick={() => setMsgs([])}
-              style={{cursor:'pointer',fontSize:'0.7rem',color:'#666',padding:'0 0.5rem'}}>↻</span>
+              style={{cursor:'pointer',fontSize:'0.7rem',color:'#666',marginLeft:'auto',padding:'0 0.5rem'}}>↻</span>
           </div>
-          <div ref={msgsRef} style={{
-            flex: 1, overflowY: 'auto', padding: '1rem', fontSize: '0.9rem'
-          }}>
-            {showName ? (
-              <div style={{padding:'1rem', borderTop:'1px solid #333', display:'flex', flexDirection:'column', gap:'0.5rem'}}>
-                <div style={{color:'#888',fontSize:'0.85rem'}}>What should I call you?</div>
-                <div style={{display:'flex',gap:'0.5rem'}}>
-                  <input id="ds-name-input" onKeyDown={e => e.key==='Enter' && setName(e.target.value)}
-                    style={{flex:1,padding:'0.5rem',background:'#333',border:'1px solid #555',borderRadius:'4px',color:'#fff',outline:'none'}} />
-                  <button onClick={() => setName(document.getElementById('ds-name-input')?.value)}
-                    style={{padding:'0.5rem 1rem',background:'#555',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>Go</button>
-                </div>
+          {showName && (
+            <div style={{padding:'1rem',borderTop:'1px solid #333',display:'flex',flexDirection:'column',gap:'0.5rem'}}>
+              <div style={{color:'#888',fontSize:'0.85rem'}}>What should I call you?</div>
+              <div style={{display:'flex',gap:'0.5rem'}}>
+                <input onKeyDown={e => e.key==='Enter' && setName(e.target.value.trim())}
+                  style={{flex:1,padding:'0.5rem',background:'#333',border:'1px solid #555',borderRadius:'4px',color:'#fff',outline:'none'}} />
+                <button onClick={() => setName(document.getElementById('ds-name-input')?.value)}
+                  style={{padding:'0.5rem 1rem',background:'#555',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer'}}>Go</button>
               </div>
-            ) : msgs.map((m, i) => (
-              <div key={i} style={{
-                marginBottom: '0.5rem', padding: '0.5rem 0.8rem',
-                borderRadius: '8px', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                textAlign: 'left', maxWidth: '85%',
-                ...(m.who === 'user'
-                  ? { background: '#333', color: '#fff', alignSelf: 'flex-end', marginLeft: 'auto' }
-                  : { background: '#222', color: '#aaa', alignSelf: 'flex-start' })
-              }}>{m.text}</div>
+            </div>
+          )}
+          <div style={{flex:1,overflowY:'auto',padding:'1rem',fontSize:'0.9rem'}}>
+            {msgs.map((m, i) => (
+              <div key={i} style={msgStyle(m.who)}>{m.text}</div>
             ))}
           </div>
-          <div style={{display:'flex', borderTop:'1px solid #333'}}>
+          <div style={{display:'flex',borderTop:'1px solid #333'}}>
             <input type="file" accept="image/*" style={{display:'none'}}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const fd = new FormData();
-                fd.append('file', file);
-                fd.append('name', userName || 'User');
-                fd.append('message', '');
-                try {
-                  const r = await fetch('https://alphacoin.uk/api/chat/upload', { method: 'POST', body: fd });
-                  const d = await r.json();
-                  if (d.image_url) await fetch(`${NTFY_URL}/${NTFY_TOPIC}`, { method: 'POST', body: `[Image] ${d.image_url}` });
+              onChange={async e => {
+                const file = e.target.files?.[0]; if(!file) return;
+                const fd = new FormData(); fd.append('file',file); fd.append('name',userName||'User'); fd.append('message','');
+                try { const r = await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd}); const d = await r.json();
+                  if(d.image_url) await fetch(`${NTFY_URL}/${NTFY_TOPIC}`,{method:'POST',body:'[Image] '+d.image_url});
                 } catch {}
               }} />
             <button onClick={() => document.querySelector('input[type=file]')?.click()}
               style={{padding:'0.8rem 0.5rem',background:'none',border:'none',cursor:'pointer',color:'#666'}}>📷</button>
             <textarea ref={inputRef} placeholder="Type something..." rows="1"
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+              onKeyDown={e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }}
               style={{flex:1,padding:'0.8rem',background:'transparent',border:'none',color:'#fff',outline:'none',resize:'none',fontSize:'0.9rem',lineHeight:1.4,minHeight:'20px',maxHeight:'60px'}} />
-            <button onClick={send}
-              style={{padding:'0.8rem 1rem',background:'#fff',color:'#000',border:'none',cursor:'pointer'}}>Send</button>
+            <button onClick={send} disabled={thinking}
+              style={{padding:'0.8rem 1rem',background:thinking?'#555':'#fff',color:thinking?'#666':'#000',border:'none',cursor:thinking?'not-allowed':'pointer'}}>Send</button>
           </div>
         </div>
       )}
     </>
   );
 }
+
+const btnStyle = {
+  position:'fixed', bottom:'2rem', left:'2rem',
+  width:'56px', height:'56px', borderRadius:'50%',
+  background:'#fff', color:'#000', border:'none',
+  fontSize:'1.5rem', cursor:'pointer',
+  boxShadow:'0 4px 20px rgba(255,255,255,0.1)', zIndex:1001
+};
+const boxStyle = {
+  position:'fixed', bottom:'6rem', left:'2rem',
+  width:'340px', maxHeight:'500px',
+  background:'#1a1a1a', border:'1px solid #333',
+  borderRadius:'12px', display:'flex', flexDirection:'column',
+  overflow:'hidden', zIndex:1000
+};
+const headerStyle = {
+  display:'flex', alignItems:'center', gap:'0.5rem',
+  padding:'1rem', borderBottom:'1px solid #333',
+  color:'#999', fontSize:'0.85rem', textTransform:'uppercase', letterSpacing:'0.1rem'
+};
+const msgStyle = (who) => ({
+  marginBottom:'0.5rem',padding:'0.5rem 0.8rem',borderRadius:'8px',
+  whiteSpace:'pre-wrap',wordBreak:'break-word',textAlign:'left',maxWidth:'85%',
+  ...(who==='user'
+    ? {background:'#333',color:'#fff',alignSelf:'flex-end',marginLeft:'auto'}
+    : {background:'#222',color:'#aaa',alignSelf:'flex-start'})
+});
