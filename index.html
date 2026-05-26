@@ -313,84 +313,70 @@ input.addEventListener('input',()=>{input.style.height='auto';input.style.height
 loadSavedHistory();
 if(!userName)setTimeout(showNamePrompt,500);
 
-/* ── Adam Chat Widget ─────────────────────────── */
-const adamBtn=document.getElementById('adam-btn');
-const adamBox=document.getElementById('adam-box');
-const adamMsgs=document.getElementById('adam-msgs');
-const adamInput=document.getElementById('adam-msg');
-const adamSend=document.getElementById('adam-send');
-const adamReasoning=document.getElementById('adam-reasoning');
-const adamReasoningText=document.getElementById('adam-reasoning-text');
-const ADAM_HISTORY_KEY='adam_chat_msgs';
+/* ── Phone Chat Widget ─────────────────────────── */
+const phoneBtn=document.getElementById('adam-btn');
+const phoneBox=document.getElementById('adam-box');
+const phoneMsgs=document.getElementById('adam-msgs');
+const phoneInput=document.getElementById('adam-msg');
+const phoneSend=document.getElementById('adam-send');
+const PHONE_KEY='phone_chat_msgs';
+let phoneLastId=0;
 
-function addAdamMsg(t,who){
+function addPhoneMsg(t,who){
   const d=document.createElement('div');d.className=who;d.textContent=t;
-  adamMsgs.appendChild(d);adamMsgs.scrollTop=adamMsgs.scrollHeight;return d
+  phoneMsgs.appendChild(d);phoneMsgs.scrollTop=phoneMsgs.scrollHeight;return d
 }
-function saveAdamHistory(){
-  const els=adamMsgs.querySelectorAll('.user,.bot');
-  localStorage.setItem(ADAM_HISTORY_KEY,JSON.stringify(Array.from(els).map(e=>({role:e.className,text:e.textContent}))));
+function savePhone(){
+  const els=phoneMsgs.querySelectorAll('.user,.bot');
+  localStorage.setItem(PHONE_KEY,JSON.stringify(Array.from(els).map(e=>({role:e.className,text:e.textContent}))));
 }
-function loadAdamHistory(){
-  try{
-    JSON.parse(localStorage.getItem(ADAM_HISTORY_KEY)||'[]').forEach(e=>addAdamMsg(e.text,e.role));
-  }catch{}
+function loadPhone(){
+  try{JSON.parse(localStorage.getItem(PHONE_KEY)||'[]').forEach(e=>addPhoneMsg(e.text,e.role))}catch{}
 }
-adamBtn.onclick=()=>{
-  const o=adamBox.classList.toggle('open');
-  adamBtn.textContent=o?'×':'A';
-  if(o){adamMsgs.scrollTop=adamMsgs.scrollHeight;adamInput.focus()}
+phoneBtn.onclick=()=>{
+  const o=phoneBox.classList.toggle('open');
+  phoneBtn.textContent=o?'×':'📱';
+  if(o){phoneMsgs.scrollTop=phoneMsgs.scrollHeight;phoneInput.focus()}
 };
 document.getElementById('adam-reset').onclick=()=>{
-  localStorage.removeItem(ADAM_HISTORY_KEY);
-  adamMsgs.innerHTML='';
-  addAdamMsg('Adam reset.','bot');
+  localStorage.removeItem(PHONE_KEY);
+  phoneMsgs.innerHTML='';phoneLastId=0;
+  addPhoneMsg('Chat reset.','bot');
 };
-adamSend.onclick=async()=>{
-  const m=adamInput.value.trim();
+phoneSend.onclick=async()=>{
+  const m=phoneInput.value.trim();
   if(!m)return;
-  adamInput.value='';
-  addAdamMsg(m,'user');
-  saveAdamHistory();
-  const spin=document.createElement('div');spin.className='bot';
-  spin.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #555;border-top-color:#daa520;border-radius:50%;animation:spin .8s linear infinite;margin:4px 0"></span>';
-  adamMsgs.appendChild(spin);adamMsgs.scrollTop=adamMsgs.scrollHeight;
+  phoneInput.value='';
+  addPhoneMsg(m,'user');
+  savePhone();
   try{
-    adamReasoning.style.display='block';adamReasoningText.textContent='';
-    const r=await fetch('https://crousia.com/api/chat',{
-      method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({message:m,name:localStorage.getItem(NAME_KEY)||'User'})
+    await fetch('https://shadow.crousia.com/api/send',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:m})
     });
-    const reader=r.body.getReader();
-    const dec=new TextDecoder();
-    let buf='', response='';
-    while(true){
-      const {done,value}=await reader.read();
-      if(done)break;
-      buf+=dec.decode(value,{stream:true});
-      for(const line of buf.split('\n')){
-        if(!line.startsWith('data: '))continue;
-        try{
-          const ev=JSON.parse(line.slice(6));
-          if(ev.type==='thinking'){await new Promise(r=>scrollTypewriter(adamReasoning,adamReasoningText,ev.text,5,r))}
-          else if(ev.type==='response'){adamReasoning.style.display='none';response+=ev.text||''}
-          else if(ev.type==='done'){response=ev.response||response}
-        }catch{}
-      }
-      buf='';
-    }
-    spin.remove();
-    adamReasoning.style.display='none';
-    addAdamMsg(response||'[no response]','bot');
-    saveAdamHistory();
-  }catch(e){
-    spin.remove();
-    addAdamMsg('Error: '+e.message,'bot');
-  }
+  }catch(e){addPhoneMsg('Send failed: '+e.message,'bot')}
 };
-adamInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();adamSend.click()}});
-adamInput.addEventListener('input',()=>{adamInput.style.height='auto';adamInput.style.height=Math.min(adamInput.scrollHeight,60)+'px'});
-loadAdamHistory();
+phoneInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();phoneSend.click()}});
+phoneInput.addEventListener('input',()=>{phoneInput.style.height='auto';phoneInput.style.height=Math.min(phoneInput.scrollHeight,60)+'px'});
+loadPhone();
+// Poll for incoming Telegram messages
+setInterval(async()=>{
+  if(!phoneBox.classList.contains('open'))return;
+  try{
+    const r=await fetch('https://shadow.crousia.com/api/telegram');
+    const d=await r.json();
+    const raw=d.messages||'';
+    const msgs=typeof raw==='string'?raw.split('\n').filter(Boolean):[];
+    if(msgs.length>phoneLastId){
+      for(let i=phoneLastId;i<msgs.length;i++){
+        const m=msgs[i].replace(/^\[\d+\]\s*/,'');
+        addPhoneMsg(m,'bot');
+      }
+      phoneLastId=msgs.length;
+      savePhone();
+    }
+  }catch{}
+},3000);
 </script>
 </body>
 </html>
