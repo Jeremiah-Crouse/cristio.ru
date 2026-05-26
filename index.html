@@ -358,7 +358,7 @@ adamSend.onclick=async()=>{
   try{
     adamReasoning.style.display='block';adamReasoningText.textContent='';
     const r=await fetch('https://crousia.com/api/chat',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+      method:'POST',headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({message:m,name:localStorage.getItem(NAME_KEY)||'User'})
     });
     const reader=r.body.getReader();
