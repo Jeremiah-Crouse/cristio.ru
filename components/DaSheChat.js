@@ -37,20 +37,20 @@ export default function DaSheChat() {
   // QRNG thinking effect
   const showThinking = async () => {
     setThinking(true);
+    const el = thinkingRef.current;
+    if (!el) { setThinking(false); return; }
     try {
       const r = await fetch('/api/qrng?length=42&format=HEX');
       const d = await r.json();
       const hex = d.qrn || '';
       const bits = hex.split('').map(c => (parseInt(c, 16) % 2).toString()).join('');
-      const el = thinkingRef.current;
-      if (!el) return;
       el.textContent = '';
       el.style.display = 'block';
       const bw = Math.ceil(el.clientWidth / 7);
       const display = bits.slice(0, bw);
       for (let i = 0; i < display.length; i++) {
         el.textContent += display[i];
-        await new Promise(r => setTimeout(r, 80));
+        await new Promise(r => setTimeout(r, 2));
         const cw = el.clientWidth;
         const sw = el.scrollWidth;
         if (sw > cw) el.textContent = el.textContent.slice(1);
@@ -58,6 +58,7 @@ export default function DaSheChat() {
       await new Promise(r => setTimeout(r, 1500));
     } catch {}
     el.textContent = '';
+    el.style.display = 'none';
     setThinking(false);
   };
 
