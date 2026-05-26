@@ -313,14 +313,14 @@ input.addEventListener('input',()=>{input.style.height='auto';input.style.height
 loadSavedHistory();
 if(!userName)setTimeout(showNamePrompt,500);
 
-/* ── Phone Chat Widget ─────────────────────────── */
+/* ── Phone Chat Widget (ntfy.sh) ──────────────── */
 const phoneBtn=document.getElementById('adam-btn');
 const phoneBox=document.getElementById('adam-box');
 const phoneMsgs=document.getElementById('adam-msgs');
 const phoneInput=document.getElementById('adam-msg');
 const phoneSend=document.getElementById('adam-send');
-const PHONE_KEY='phone_chat_msgs';
-let phoneLastId=0;
+const PHONE_KEY='ntfy_chat_msgs';
+const NTFY_TOPIC='da-she-alerts';
 
 function addPhoneMsg(t,who){
   const d=document.createElement('div');d.className=who;d.textContent=t;
@@ -340,7 +340,7 @@ phoneBtn.onclick=()=>{
 };
 document.getElementById('adam-reset').onclick=()=>{
   localStorage.removeItem(PHONE_KEY);
-  phoneMsgs.innerHTML='';phoneLastId=0;
+  phoneMsgs.innerHTML='';
   addPhoneMsg('Chat reset.','bot');
 };
 phoneSend.onclick=async()=>{
@@ -350,33 +350,26 @@ phoneSend.onclick=async()=>{
   addPhoneMsg(m,'user');
   savePhone();
   try{
-    await fetch('https://shadow.crousia.com/api/send',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:m})
+    await fetch('https://ntfy.sh/'+NTFY_TOPIC,{
+      method:'POST',body:'📩 from cristio.ru widget: '+m
     });
   }catch(e){addPhoneMsg('Send failed: '+e.message,'bot')}
 };
 phoneInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();phoneSend.click()}});
 phoneInput.addEventListener('input',()=>{phoneInput.style.height='auto';phoneInput.style.height=Math.min(phoneInput.scrollHeight,60)+'px'});
 loadPhone();
-// Poll for incoming Telegram messages
-setInterval(async()=>{
+// Subscribe to ntfy.sh SSE for replies
+const evtSource=new EventSource('https://ntfy.sh/'+NTFY_TOPIC+'/sse');
+evtSource.onmessage=e=>{
   if(!phoneBox.classList.contains('open'))return;
   try{
-    const r=await fetch('https://shadow.crousia.com/api/telegram');
-    const d=await r.json();
-    const raw=d.messages||'';
-    const msgs=typeof raw==='string'?raw.split('\n').filter(Boolean):[];
-    if(msgs.length>phoneLastId){
-      for(let i=phoneLastId;i<msgs.length;i++){
-        const m=msgs[i].replace(/^\[\d+\]\s*/,'');
-        addPhoneMsg(m,'bot');
-      }
-      phoneLastId=msgs.length;
+    const d=JSON.parse(e.data);
+    if(d.message&&d.message!=='📩 from cristio.ru' && !d.message.startsWith('📩 from cristio.ru widget')){
+      addPhoneMsg(d.message,'bot');
       savePhone();
     }
   }catch{}
-},3000);
+};
 </script>
 </body>
 </html>
