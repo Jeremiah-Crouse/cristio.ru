@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const NTFY_URL = 'https://api.cristio.ru/ntfy';
+const NTFY_URL = '/ntfy';
 const NTFY_TOPIC = 'da-she-alerts';
 const DS_NAME_KEY = 'da_she_user_name';
 
