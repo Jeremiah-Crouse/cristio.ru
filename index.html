@@ -350,26 +350,31 @@ phoneSend.onclick=async()=>{
   addPhoneMsg(m,'user');
   savePhone();
   try{
-    await fetch('https://ntfy.sh/'+NTFY_TOPIC,{
-      method:'POST',body:'📩 from cristio.ru widget: '+m
+    await fetch('https://crousia.com/api/notify',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:m})
     });
   }catch(e){addPhoneMsg('Send failed: '+e.message,'bot')}
 };
 phoneInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();phoneSend.click()}});
 phoneInput.addEventListener('input',()=>{phoneInput.style.height='auto';phoneInput.style.height=Math.min(phoneInput.scrollHeight,60)+'px'});
 loadPhone();
-// Subscribe to ntfy.sh SSE for replies
-const evtSource=new EventSource('https://ntfy.sh/'+NTFY_TOPIC+'/sse');
-evtSource.onmessage=e=>{
+// Poll crousia.com for replies
+let lastMsgCount=0;
+setInterval(async()=>{
   if(!phoneBox.classList.contains('open'))return;
   try{
-    const d=JSON.parse(e.data);
-    if(d.message&&d.message!=='📩 from cristio.ru' && !d.message.startsWith('📩 from cristio.ru widget')){
-      addPhoneMsg(d.message,'bot');
-      savePhone();
+    const r=await fetch('https://crousia.com/api/notify');
+    const d=await r.json();
+    const msgs=d.messages||[];
+    for(const msg of msgs){
+      if(msg.text && !msg.text.startsWith('📩 from cristio.ru')){
+        addPhoneMsg(msg.text,'bot');
+        savePhone();
+      }
     }
   }catch{}
-};
+},3000);
 </script>
 </body>
 </html>
