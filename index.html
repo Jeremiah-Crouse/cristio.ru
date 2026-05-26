@@ -18,15 +18,23 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 #telegram-btn svg{width:26px;height:26px;fill:#fff;display:block}
 #adam-btn{position:fixed;bottom:2rem;left:2rem;width:56px;height:56px;border-radius:50%;background:#e91e63;color:#fff;border:none;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(233,30,99,0.3);transition:transform .2s}
 #adam-btn:hover{transform:scale(1.1)}
-#adam-btn .serpent{display:inline-block;transform:scaleX(-1)}
 #adam-box{position:fixed;bottom:6rem;left:2rem;width:340px;max-height:500px;background:#1a1a1a;border:1px solid #333;border-radius:12px;display:none;flex-direction:column;overflow:hidden}
 #adam-box.open{display:flex}
-#adam-box #chat-header{color:#e91e63}
-#adam-box #reasoning-bar{display:none}
-#adam-box #reasoning-text{color:#e91e63}
-#adam-box #chat-msgs .bot{color:#e91e63}
-#adam-box #chat-input button{background:#e91e63;color:#fff}
-#adam-box #reset-btn{color:#e91e63}
+#ds-header{display:flex;align-items:center;gap:0.5rem;padding:1rem;border-bottom:1px solid #333;color:#e91e63;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1rem}
+#ds-header .reasoning-bar{display:none;overflow:hidden;white-space:nowrap;flex:1;text-align:right;position:relative}
+#ds-header .reasoning-text{display:inline-block;white-space:nowrap;color:#ff6b35;font-style:italic;font-size:0.8rem}
+#ds-msgs{flex:1;overflow-y:auto;padding:1rem;font-size:0.9rem}
+#ds-msgs div{margin-bottom:0.5rem;padding:0.5rem 0.8rem;border-radius:8px;white-space:pre-wrap;word-break:break-word;text-align:left;max-width:85%}
+#ds-msgs .user{background:#333;color:#fff;align-self:flex-end;margin-left:auto}
+#ds-msgs .bot{background:#222;color:#e91e63;align-self:flex-start}
+#ds-input{display:flex;border-top:1px solid #333}
+#ds-input textarea{flex:1;padding:0.8rem;background:transparent;border:none;color:#fff;outline:none;resize:none;font-family:inherit;font-size:inherit;line-height:1.4;min-height:20px;max-height:60px}
+#ds-input button{padding:0.8rem 1rem;background:#e91e63;color:#fff;border:none;cursor:pointer}
+#ds-name-wrap{display:none;padding:1rem;border-top:1px solid #333;flex-direction:column;gap:0.5rem}
+#ds-name-wrap .label{color:#888;font-size:0.85rem}
+#ds-name-wrap .row{display:flex;gap:0.5rem}
+#ds-name-wrap input{flex:1;padding:0.5rem;background:#333;border:1px solid #555;border-radius:4px;color:#fff;outline:none}
+#ds-name-wrap button{padding:0.5rem 1rem;background:#555;color:#fff;border:none;border-radius:4px;cursor:pointer}
 #chat-box{position:fixed;bottom:6rem;right:2rem;width:340px;max-height:500px;background:#1a1a1a;border:1px solid #333;border-radius:12px;display:none;flex-direction:column;overflow:hidden}
 #chat-box.open{display:flex}
 #chat-header{display:flex;align-items:center;gap:0.5rem;padding:1rem;border-bottom:1px solid #333;color:#999;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.1rem}
@@ -62,26 +70,27 @@ p{font-size:1.1rem;line-height:1.8;max-width:600px;margin-bottom:2rem;color:#999
 <p style="font-size:0.85rem;color:#555;margin-top:-1.5rem;font-style:italic">「我常與你們同在，直到世界的末了。」</p>
 <p style="font-size:0.85rem;color:#555;margin-top:0.25rem;font-style:italic">0x4a6573757320706f72204372697374696f</p>
 
-<button id="adam-btn"><span class="serpent">🐍</span></button>
+<button id="adam-btn">+</button>
 
 <div id="adam-box">
-  <div id="chat-header"><span class="serpent" style="margin-right:0.3rem">🐍</span><div id="reasoning-bar"><span id="reasoning-text"></span></div><span id="adam-reset" style="cursor:pointer;font-size:0.7rem;margin-left:auto;padding:0 0.5rem" title="Reset">↻</span></div>
-  <div id="chat-msgs"></div>
-  <div id="chat-name-wrap">
+  <div id="ds-header"><span style="display:inline-block;transform:scaleX(-1)">🐍</span><div class="reasoning-bar"><span class="reasoning-text"></span></div><span id="ds-reset" style="cursor:pointer;font-size:0.7rem;color:#666;margin-left:auto;padding:0 0.5rem" title="Reset">↻</span></div>
+  <div id="ds-msgs"></div>
+  <div id="ds-name-wrap">
     <div class="label">What should I call you?</div>
     <div class="row">
-      <input type="text" id="adam-name-input" placeholder="Your name...">
-      <button id="adam-name-go">Go</button>
+      <input type="text" id="ds-name-input" placeholder="Your name...">
+      <button id="ds-name-go">Go</button>
     </div>
   </div>
-  <div id="chat-input">
-    <input type="file" id="adam-file-input" accept="image/*" style="display:none">
-    <button id="adam-upload-btn" style="padding:0.8rem 0.5rem;background:none;border:none;cursor:pointer;color:#666" title="Upload image">📷</button>
-    <textarea id="adam-msg-input" placeholder="Type something..." rows="1"></textarea>
-    <button id="adam-send-btn">Send</button>
+  <div id="ds-input">
+    <input type="file" id="ds-file-input" accept="image/*" style="display:none">
+    <button id="ds-upload-btn" style="padding:0.8rem 0.5rem;background:none;border:none;cursor:pointer;color:#666" title="Upload image">📷</button>
+    <textarea id="ds-msg-input" placeholder="Type something..." rows="1"></textarea>
+    <button id="ds-send-btn">Send</button>
   </div>
 </div>
-</div>
+
+<button id="chat-btn">+</button>
 
 <div id="chat-box">
   <div id="chat-header"><img src="photos/AC.png" style="width:16px;height:16px;border-radius:2px;vertical-align:middle;margin-right:0.3rem"><div id="reasoning-bar"><span id="reasoning-text"></span></div><span id="reset-btn" style="cursor:pointer;font-size:0.7rem;color:#666;margin-left:auto;padding:0 0.5rem" title="Reset">↻</span></div>
@@ -321,15 +330,15 @@ if(!userName)setTimeout(showNamePrompt,500);
 /* ── Da She Chat Widget (ntfy) ─────────────────── */
 const dsBtn=document.getElementById('adam-btn');
 const dsBox=document.getElementById('adam-box');
-const dsMsgs=document.getElementById('chat-msgs');
-const dsInput=document.getElementById('adam-msg-input');
-const dsSend=document.getElementById('adam-send-btn');
-const dsReset=document.getElementById('adam-reset');
-const dsFileInput=document.getElementById('adam-file-input');
-const dsUploadBtn=document.getElementById('adam-upload-btn');
-const dsNameWrap=document.getElementById('chat-name-wrap');
-const dsNameInput=document.getElementById('adam-name-input');
-const dsNameGo=document.getElementById('adam-name-go');
+const dsMsgs=document.getElementById('ds-msgs');
+const dsInput=document.getElementById('ds-msg-input');
+const dsSend=document.getElementById('ds-send-btn');
+const dsReset=document.getElementById('ds-reset');
+const dsFileInput=document.getElementById('ds-file-input');
+const dsUploadBtn=document.getElementById('ds-upload-btn');
+const dsNameWrap=document.getElementById('ds-name-wrap');
+const dsNameInput=document.getElementById('ds-name-input');
+const dsNameGo=document.getElementById('ds-name-go');
 const NTFY_URL='https://api.cristio.ru/ntfy';
 const NTFY_TOPIC='da-she-alerts';
 let dsUserName=null;
@@ -346,7 +355,7 @@ function dsSpinner(){
 
 dsBtn.onclick=()=>{
   const o=dsBox.classList.toggle('open');
-  dsBtn.innerHTML=o?'<span class="serpent" style="transform:none">✕</span>':'<span class="serpent">🐍</span>';
+  dsBtn.textContent=o?'×':'+';
   if(o){dsMsgs.scrollTop=dsMsgs.scrollHeight;if(!dsUserName)dsNameWrap.style.display='flex';else dsInput.focus()}
 };
 dsReset.onclick=()=>{dsMsgs.innerHTML='';addDsMsg('Da She reset.','bot')};
