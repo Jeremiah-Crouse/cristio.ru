@@ -339,9 +339,11 @@ const dsUploadBtn=document.getElementById('ds-upload-btn');
 const dsNameWrap=document.getElementById('ds-name-wrap');
 const dsNameInput=document.getElementById('ds-name-input');
 const dsNameGo=document.getElementById('ds-name-go');
+const DS_NAME_KEY='da_she_user_name';
 const NTFY_URL='https://api.cristio.ru';
 const NTFY_TOPIC='da-she-alerts';
-let dsUserName=null;
+let dsUserName=localStorage.getItem(DS_NAME_KEY)||null;
+let lastSentText='';
 
 function addDsMsg(t,who){
   const d=document.createElement('div');d.className=who;d.textContent=t;
@@ -349,7 +351,7 @@ function addDsMsg(t,who){
 }
 function dsSpinner(){
   const d=document.createElement('div');d.className='bot';
-  d.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #555;border-top-color:#e91e63;border-radius:50%;animation:spin .8s linear infinite;margin:4px 0"></span>';
+  d.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid #555;border-top-color:#ff6b35;border-radius:50%;animation:spin .8s linear infinite;margin:4px 0"></span>';
   dsMsgs.appendChild(d);dsMsgs.scrollTop=dsMsgs.scrollHeight;return d
 }
 
@@ -359,8 +361,8 @@ dsBtn.onclick=()=>{
   if(o){dsMsgs.scrollTop=dsMsgs.scrollHeight;if(!dsUserName)dsNameWrap.style.display='flex';else dsInput.focus()}
 };
 dsReset.onclick=()=>{dsMsgs.innerHTML='';addDsMsg('Da She reset.','bot')};
-dsNameGo.onclick=()=>{const n=dsNameInput.value.trim();if(n){dsUserName=n;dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'. Da She is here.','bot')}};
-dsNameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=dsNameInput.value.trim();if(n){dsUserName=n;dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'. Da She is here.','bot')}}});
+dsNameGo.onclick=()=>{const n=dsNameInput.value.trim();if(n){dsUserName=n;localStorage.setItem(DS_NAME_KEY,n);dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'. Da She is here.','bot')}};
+dsNameInput.addEventListener('keydown',e=>{if(e.key==='Enter'){const n=dsNameInput.value.trim();if(n){dsUserName=n;localStorage.setItem(DS_NAME_KEY,n);dsNameWrap.style.display='none';dsInput.focus();addDsMsg('Hello, '+n+'. Da She is here.','bot')}}});
 dsUploadBtn.onclick=()=>dsFileInput.click();
 dsFileInput.onchange=async function(){
   const file=this.files[0];if(!file)return;
@@ -376,6 +378,7 @@ dsSend.onclick=async()=>{
   const m=dsInput.value.trim();
   if(!m)return;
   dsInput.value='';
+  lastSentText=m;
   addDsMsg(m,'user');
   const spin=dsSpinner();
   try{
@@ -385,13 +388,17 @@ dsSend.onclick=async()=>{
 };
 dsInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();dsSend.click()}});
 dsInput.addEventListener('input',()=>{dsInput.style.height='auto';dsInput.style.height=Math.min(dsInput.scrollHeight,60)+'px'});
-// Subscribe to ntfy SSE for replies
+if(dsUserName)setTimeout(()=>dsInput.focus(),100);
+// Subscribe to ntfy SSE for replies (filter out own messages)
 const dsEvt=new EventSource(NTFY_URL+'/'+NTFY_TOPIC+'/sse');
 dsEvt.onmessage=e=>{
   if(!dsBox.classList.contains('open'))return;
   try{
     const d=JSON.parse(e.data);
-    if(d.message)addDsMsg(d.message,'bot');
+    if(d.message && d.message !== lastSentText){
+      lastSentText='';
+      addDsMsg(d.message,'bot');
+    }
   }catch{}
 };
 </script>
