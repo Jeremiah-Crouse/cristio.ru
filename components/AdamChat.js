@@ -20,16 +20,48 @@ export default function AdamChat() {
     else setShowName(true);
   }, []);
 
+  // Typewriter marquee for reasoning — matches original cristio.ru behavior
+  const reasoningTimerRef = useRef(null);
+  const reasoningIdxRef = useRef(0);
+  const reasoningFullRef = useRef('');
+  const pendingResponseRef = useRef('');
+
+  useEffect(() => {
+    return () => { if (reasoningTimerRef.current) clearTimeout(reasoningTimerRef.current); };
+  }, []);
+
+  const finishThinking = () => {
+    setReasoningVisible(false);
+    reasoningIdxRef.current = 0;
+    reasoningFullRef.current = '';
+    const pending = pendingResponseRef.current;
+    if (pending) {
+      pendingResponseRef.current = '';
+      addMsg(pending, 'bot');
+    }
+  };
+
   const scrollReasoning = (text) => {
     const container = reasoningRef.current;
     const el = reasoningTextRef.current;
     if (!container || !el) return;
+    reasoningFullRef.current += text;
     container.style.display = 'block';
-    setReasoning(text);
-    el.textContent = text;
-    const cw = container.clientWidth;
-    const sw = el.scrollWidth;
-    el.style.transform = `translateX(${cw - sw}px)`;
+    setReasoning(reasoningFullRef.current);
+
+    const typewrite = () => {
+      const full = reasoningFullRef.current;
+      const idx = reasoningIdxRef.current;
+      if (idx >= full.length) { reasoningTimerRef.current = null; finishThinking(); return; }
+      const n = Math.min(1 + Math.floor(Math.random() * 2), full.length - idx);
+      el.textContent += full.slice(idx, idx + n);
+      reasoningIdxRef.current = idx + n;
+      const cw = container.clientWidth;
+      const sw = el.scrollWidth;
+      el.style.transform = `translateX(${cw - sw}px)`;
+      reasoningTimerRef.current = setTimeout(typewrite, 5);
+    };
+    if (!reasoningTimerRef.current) typewrite();
   };
 
   const connectSocket = (name) => {
@@ -53,10 +85,16 @@ export default function AdamChat() {
       socket.emit('chat', { text: m, name: userName || 'User' });
       socket.off('thinking'); socket.off('response'); socket.off('tool'); socket.off('done'); socket.off('error');
       socket.on('thinking', d => scrollReasoning(d.text || ''));
-      socket.on('response', d => { setReasoningVisible(false); addMsg(d.text, 'bot'); });
-      socket.on('tool', d => { setReasoningVisible(false); addMsg('[tool: ' + d.text + ']', 'bot'); });
-      socket.on('done', () => setReasoningVisible(false));
-      socket.on('error', d => { setReasoningVisible(false); addMsg('Error: ' + (d.message || 'unknown'), 'bot'); });
+      socket.on('response', d => {
+        if (reasoningTimerRef.current) {
+          pendingResponseRef.current = d.text;
+        } else {
+          addMsg(d.text, 'bot');
+        }
+      });
+      socket.on('tool', d => { pendingResponseRef.current = ''; setReasoningVisible(false); addMsg('[tool: ' + d.text + ']', 'bot'); });
+      socket.on('done', () => { if (!reasoningTimerRef.current && !pendingResponseRef.current) setReasoningVisible(false); });
+      socket.on('error', d => { pendingResponseRef.current = ''; setReasoningVisible(false); addMsg('Error: ' + (d.message || 'unknown'), 'bot'); });
     } else {
       addMsg('[offline]', 'bot');
     }
@@ -70,7 +108,7 @@ export default function AdamChat() {
       {open && (
         <div style={boxStyle}>
           <div style={headerStyle}>
-            <img src="/photos/AC.png" style={{width:'16px',height:'16px',borderRadius:'2px',verticalAlign:'middle',marginRight:'0.3rem'}} />
+            <img src="/alphacoin-gold.jpg" style={{width:'16px',height:'16px',borderRadius:'50%',objectFit:'cover',verticalAlign:'middle',marginRight:'0.3rem'}} />
             <div ref={reasoningRef} style={{display:'none',overflow:'hidden',whiteSpace:'nowrap',flex:1,textAlign:'right',position:'relative'}}>
               <span ref={reasoningTextRef} style={{display:'inline-block',whiteSpace:'nowrap',color:'#ff6b35',fontStyle:'italic',fontSize:'0.8rem',letterSpacing:0,textTransform:'none',position:'relative'}} />
             </div>

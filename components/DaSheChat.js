@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 
-const NTFY_URL = '/ntfy';
+const NTFY_URL = 'https://api.cristio.ru';
 const NTFY_TOPIC = 'da-she-alerts';
 const DS_NAME_KEY = 'da_she_user_name';
 
@@ -40,22 +40,25 @@ export default function DaSheChat() {
     const el = thinkingRef.current;
     if (!el) { setThinking(false); return; }
     try {
-      const r = await fetch('/api/qrng?length=42&format=HEX');
+      const r = await fetch('/api/qrng?length=256&format=HEX');
       const d = await r.json();
       const hex = d.qrn || '';
       const bits = hex.split('').map(c => (parseInt(c, 16) % 2).toString()).join('');
       el.textContent = '';
       el.style.display = 'block';
       const bw = Math.ceil(el.clientWidth / 7);
-      const display = bits.slice(0, bw);
-      for (let i = 0; i < display.length; i++) {
-        el.textContent += display[i];
-        await new Promise(r => setTimeout(r, 2));
-        const cw = el.clientWidth;
-        const sw = el.scrollWidth;
-        if (sw > cw) el.textContent = el.textContent.slice(1);
+      // Pre-fill the bar
+      for (let i = 0; i < bw && i < bits.length; i++) {
+        el.textContent += bits[i];
+        await new Promise(r => setTimeout(r, 1));
       }
-      await new Promise(r => setTimeout(r, 1500));
+      // Stream remaining bits, scrolling as we go
+      const remaining = bits.slice(bw);
+      for (let i = 0; i < remaining.length; i++) {
+        el.textContent = el.textContent.slice(1) + remaining[i];
+        await new Promise(r => setTimeout(r, 1));
+      }
+      await new Promise(r => setTimeout(r, 2000));
     } catch {}
     el.textContent = '';
     el.style.display = 'none';
