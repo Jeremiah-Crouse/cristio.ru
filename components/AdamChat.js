@@ -65,13 +65,17 @@ export default function AdamChat() {
   };
 
   const connectSocket = (name) => {
-    const socket = io('https://alphacoin.uk', { transports: ['websocket', 'polling'], timeout: 30000 });
+    const socket = io('https://api.crousia.com', { transports: ['websocket', 'polling'], timeout: 30000 });
     socket.on('connect', () => socket.emit('identify', { name }));
     socket.on('disconnect', () => setTimeout(() => connectSocket(name), 3000));
     socketRef.current = socket;
   };
 
   const addMsg = (text, who) => setMsgs(prev => [...prev, { text, who }]);
+
+  useEffect(() => {
+    if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
+  }, [msgs]);
 
   const send = () => {
     const m = inputRef.current?.value?.trim();
@@ -135,7 +139,7 @@ export default function AdamChat() {
               onChange={async e => {
                 const file = e.target.files?.[0]; if(!file) return;
                 const fd = new FormData(); fd.append('file',file); fd.append('name',userName||'User'); fd.append('message','');
-                try { await fetch('https://alphacoin.uk/api/chat/upload',{method:'POST',body:fd}); } catch {}
+                try { await fetch('https://api.crousia.com/api/chat/upload',{method:'POST',body:fd}); } catch {}
               }} />
             <button onClick={() => document.querySelector('input[type=file]')?.click()}
               style={{padding:'0.8rem 0.5rem',background:'none',border:'none',cursor:'pointer',color:'#666'}}>📷</button>
