@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import DaSheChat from '../components/DaSheChat';
 import AdamChat from '../components/AdamChat';
 
 export default function Home() {
@@ -8,8 +7,8 @@ export default function Home() {
       <Head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <title>Cristio — Forest Haven</title>
+        <link rel="manifest" href="/site.webmanifest" />
+        <title>Cristio — Regnum Unitum</title>
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
         <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" />
       </Head>
@@ -52,7 +51,6 @@ export default function Home() {
             fontSize: '0.85rem', color: '#8a7a5a', letterSpacing: '0.2rem',
             textTransform: 'uppercase', marginBottom: '2rem'
           }}>
-            Forest Haven
           </p>
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '0 auto 2rem' }} />
           <p style={{
@@ -70,7 +68,6 @@ export default function Home() {
           </p>
         </div>
       </div>
-      <DaSheChat />
       <AdamChat />
       <style jsx global>{`
         @keyframes spin { to { transform: rotate(360deg); } }

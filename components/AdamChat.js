@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
 export default function AdamChat() {
@@ -8,6 +8,7 @@ export default function AdamChat() {
   const [showName, setShowName] = useState(false);
   const [reasoning, setReasoning] = useState('');
   const [reasoningVisible, setReasoningVisible] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   const inputRef = useRef(null);
   const msgsRef = useRef(null);
   const reasoningRef = useRef(null);
@@ -59,7 +60,7 @@ export default function AdamChat() {
       const cw = container.clientWidth;
       const sw = el.scrollWidth;
       el.style.transform = `translateX(${cw - sw}px)`;
-      reasoningTimerRef.current = setTimeout(typewrite, 5);
+      reasoningTimerRef.current = setTimeout(typewrite, 2);
     };
     if (!reasoningTimerRef.current) typewrite();
   };
@@ -112,11 +113,12 @@ export default function AdamChat() {
       {open && (
         <div style={boxStyle}>
           <div style={headerStyle}>
-            <img src="/alphacoin-gold.jpg" style={{width:'16px',height:'16px',borderRadius:'50%',objectFit:'cover',verticalAlign:'middle',marginRight:'0.3rem'}} />
+            <img src="/favicon.svg" style={{width:'16px',height:'16px',verticalAlign:'middle',marginRight:'0.3rem'}} />
             <div ref={reasoningRef} style={{display:'none',overflow:'hidden',whiteSpace:'nowrap',flex:1,textAlign:'right',position:'relative'}}>
               <span ref={reasoningTextRef} style={{display:'inline-block',whiteSpace:'nowrap',color:'#ff6b35',fontStyle:'italic',fontSize:'0.8rem',letterSpacing:0,textTransform:'none',position:'relative'}} />
             </div>
-            <span onClick={() => setMsgs([])} style={{cursor:'pointer',fontSize:'0.7rem',color:'#666',marginLeft:'auto',padding:'0 0.5rem'}}>↻</span>
+            <span onClick={() => { if (spinning) return; setSpinning(true); setMsgs([]); setTimeout(() => setSpinning(false), 1500); }}
+              style={{cursor:'pointer',fontSize:'0.7rem',color:'#666',marginLeft:'auto',padding:'0 0.5rem',display:'inline-block',animation: spinning ? 'spin 1.5s linear' : 'none'}}>↻</span>
           </div>
           {showName && (
             <div style={{padding:'1rem',borderTop:'1px solid #333',display:'flex',flexDirection:'column',gap:'0.5rem'}}>
