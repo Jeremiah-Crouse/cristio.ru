@@ -113,7 +113,7 @@ export default function AdamChat() {
       {open && (
         <div style={boxStyle}>
           <div style={headerStyle}>
-            <img src="/favicon.svg" style={{width:'16px',height:'16px',verticalAlign:'middle',marginRight:'0.3rem'}} />
+            <img src="/favicon.ico" style={{width:'16px',height:'16px',verticalAlign:'middle',marginRight:'0.3rem'}} />
             <div ref={reasoningRef} style={{display:'none',overflow:'hidden',whiteSpace:'nowrap',flex:1,textAlign:'right',position:'relative'}}>
               <span ref={reasoningTextRef} style={{display:'inline-block',whiteSpace:'nowrap',color:'#ff6b35',fontStyle:'italic',fontSize:'0.8rem',letterSpacing:0,textTransform:'none',position:'relative'}} />
             </div>
