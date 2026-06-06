@@ -25,10 +25,7 @@ export default function Home() {
           position: 'fixed', inset: 0, pointerEvents: 'none',
           background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%)'
         }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '700px',
-          border: '1px solid rgba(212, 175, 55, 0.15)', borderRadius: '1rem',
-          padding: '3rem 2.5rem', background: 'rgba(0,0,0,0.15)'
-        }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '700px' }}>
           <div style={{
             width: '200px', height: '200px', borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(200,120,50,0.08) 0%, transparent 70%)',
