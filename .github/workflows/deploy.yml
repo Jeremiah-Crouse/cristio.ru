@@ -1,0 +1,26 @@
+name: Deploy cristio.ru to GCP
+
+on:
+  push:
+    branches: [next]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:next
+      - name: Sync to GCP
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avz --delete
+          path: out/
+          remote_path: /var/www/html/
+          remote_host: 100.99.179.32
+          remote_user: ubuntu
+          remote_key: ${{ secrets.GCP_SSH_KEY }}
