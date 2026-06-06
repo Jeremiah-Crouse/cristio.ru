@@ -56,7 +56,7 @@ export default function Crousia() {
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '2rem auto' }} />
 
           <p style={{ fontSize: '0.75rem', color: '#5a647f', textAlign: 'center', marginTop: '2rem' }}>
-            The breath is the standard.
+            Crouse — fierce and lively. A crown in the hand of the King.
           </p>
         </div>
       </div>
