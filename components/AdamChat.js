@@ -133,7 +133,10 @@ export default function AdamChat() {
           )}
           <div ref={msgsRef} style={{flex:1,overflowY:'auto',padding:'1rem',fontSize:'0.9rem'}}>
             {msgs.map((m, i) => (
-              <div key={i} style={msgStyle(m.who)}>{m.text}</div>
+              <div key={i} style={msgStyle(m.who)}>
+                {m.image ? <img src={m.image} style={{maxWidth:'100%',borderRadius:'8px',marginBottom:'0.3rem'}} /> : null}
+                {m.text}
+              </div>
             ))}
           </div>
           <div style={{display:'flex',borderTop:'1px solid #333'}}>
@@ -141,7 +144,12 @@ export default function AdamChat() {
               onChange={async e => {
                 const file = e.target.files?.[0]; if(!file) return;
                 const fd = new FormData(); fd.append('file',file); fd.append('name',userName||'User'); fd.append('message','');
-                addMsg('📷 Uploading...', 'bot');
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  const previewUrl = ev.target?.result;
+                  setMsgs(prev => [...prev, { text: '📷', who: 'user', image: previewUrl }]);
+                };
+                reader.readAsDataURL(file);
                 try {
                   const r = await fetch('https://api.crousia.com/api/chat/upload',{method:'POST',body:fd});
                   if (r.ok) {
