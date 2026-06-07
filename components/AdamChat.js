@@ -141,7 +141,18 @@ export default function AdamChat() {
               onChange={async e => {
                 const file = e.target.files?.[0]; if(!file) return;
                 const fd = new FormData(); fd.append('file',file); fd.append('name',userName||'User'); fd.append('message','');
-                try { await fetch('https://api.crousia.com/api/chat/upload',{method:'POST',body:fd}); } catch {}
+                addMsg('📷 Uploading...', 'bot');
+                try {
+                  const r = await fetch('https://api.crousia.com/api/chat/upload',{method:'POST',body:fd});
+                  if (r.ok) {
+                    const d = await r.json();
+                    if (d.response) addMsg(d.response, 'bot');
+                  } else {
+                    addMsg('📷 Upload failed (' + r.status + ')', 'bot');
+                  }
+                } catch(e) {
+                  addMsg('📷 Upload error: ' + e.message, 'bot');
+                }
               }} />
             <button onClick={() => document.querySelector('input[type=file]')?.click()}
               style={{padding:'0.8rem 0.5rem',background:'none',border:'none',cursor:'pointer',color:'#666'}}>📷</button>
