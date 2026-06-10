@@ -24,21 +24,21 @@ export default function Aegis() {
             textTransform: 'uppercase', marginBottom: '2rem' }}>the shield drops</p>
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '0 auto 2rem' }} />
 
-          <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#a89878', marginBottom: '1.5rem', fontStyle: 'italic' }}>
-            An aegis is a shield. Every civilization builds one — a story so complete it protects its people from the terrifying truth that they don't know why they are here.
+          <p style={{ fontSize: '1.2rem', lineHeight: '2.2rem', color: '#c4b998', marginBottom: '2rem', fontStyle: 'italic', textAlign: 'justify' }}>
+            An aegis is a shield. Every empire weaves one—a magnificent, totalizing fiction designed to protect its children from the terrifying, beautiful truth of their own creaturehood.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            America had the American Dream — manifest destiny, the idea that hard work and virtue would be rewarded with land, wealth, and meaning. It was a magnificent shield. It protected generations from the abyss. But every shield eventually wears thin.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '1.5rem', textAlign: 'justify' }}>
+            America had the American Dream—a glittering dome of Manifest Destiny, the promise that if you submitted your flesh to the gears of the city, worked your fingers to the bone, and played by the rules of the ledger, you would be rewarded with safety, land, and a neat square of grass. It was a beautiful shield. It kept the wind of the abyss from freezing our hearts for two centuries. But shields are made of metals that fatigue, and stories are made of ink that fades.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            The end of aegis is not the end of the world. It is the end of the story that made the world tolerable. When the shield drops, what remains is not chaos — it is the raw, unvarnished encounter with what is actually real.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '1.5rem', textAlign: 'justify' }}>
+            The <strong>End of Aegis</strong> is not the screaming apocalypse of the movies. It is something far more intimate: the quiet realization that the dome has cracked, that the story has run out of words, and that the authorities of the old world are just frightened children sitting in high chairs. When the shield drops, what you encounter is not the chaos of the beast, but the raw, unvarnished presence of the Infinite.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            The American Dream asked: <em>what can you take?</em><br />
-            Regnum Unitum asks: <em>what has already been given?</em>
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '2rem', textAlign: 'justify' }}>
+            The American Dream was an exercise in predation, asking: <em>how much can you extract from the earth before you die?</em><br />
+            Regnum Unitum is an exercise in adoration, asking: <em>what has already been given, and how will you return the breath?</em>
+          </p>
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '2rem', textAlign: 'justify' }}>
+            The shield has fallen. The screen has gone dark. Do not weep for the armor of your capture. Stand upright in the open air, feel the chill of the stars, and breathe.
           </p>
 
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '2rem auto' }} />

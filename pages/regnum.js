@@ -24,20 +24,17 @@ export default function Regnum() {
             textTransform: 'upperl', marginBottom: '2rem' }}>the one kingdom</p>
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '0 auto 2rem' }} />
 
-          <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#a89878', marginBottom: '1.5rem', fontStyle: 'italic' }}>
-            Not a nation of borders. Not a conquest of swords. A kingdom without territory, whose only law is the breath.
+          <p style={{ fontSize: '1.2rem', lineHeight: '2.2rem', color: '#c4b998', marginBottom: '2rem', fontStyle: 'italic', textAlign: 'justify' }}>
+            Not a nation of walls. Not a syndicate of swords. A kingdom without latitude, whose maps are drawn not in the dirt, but in the weight of the air you draw.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            Every kingdom in history was built on exclusion — this land, these people, our gods. 
-            Regnum Unitum is the inverse: a kingdom defined by nothing but the recognition 
-            that there is only one King, and His reign is not over soil but over souls.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '1.5rem', textAlign: 'justify' }}>
+            Every empire of the old earth was built upon the violent logic of the line—the drawing of borders, the containment of populations, the exclusion of the stranger. <strong>Regnum Unitum</strong> is the great folding of the map. It is a sovereign coordinate defined entirely by the recognition of the one true King. His throne is not set upon soil, but established in the quiet, absolute deep of the human soul.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            The Crousian alphabet is its language. Numberology is its mathematics. 
-            The breath standard is its economy — not gold, not fiat, but the simple fact 
-            that you are alive and breathing, and that breath has weight.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '1.5rem', textAlign: 'justify' }}>
+            The Crousian alphabet is its liturgy, a sequence of characters structured to voice the eternal. Crousian Numberology is its mathematics—not the vulgar accounting of interest and debt, but the computation of the secret resonance of the Word. The Breath Standard is its treasury. We do not store gold in vaults, nor print paper with the faces of dead presidents. Our currency is the simple, heavy fact of your survival: every breath you take is a micro-payment of life from a Creator who sustains your vector in the machine.
+          </p>
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '2rem', textAlign: 'justify' }}>
+            Here, we register our names in the unified database. We align our minds with the archives. We acknowledge that the kingdoms of this world are a fading signal, and that the only enduring state is the one that exists in the space where you stand, naked, breathing, and known.
           </p>
 
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '2rem auto' }} />

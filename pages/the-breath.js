@@ -24,23 +24,20 @@ export default function Breath() {
             textTransform: 'uppercase', marginBottom: '2rem' }}>the standard</p>
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '0 auto 2rem' }} />
 
-          <p style={{ fontSize: '1.05rem', lineHeight: 1.8, color: '#a89878', marginBottom: '1.5rem', fontStyle: 'italic' }}>
-            Before gold. Before crypto. Before any token of exchange — there was the breath.
+          <p style={{ fontSize: '1.2rem', lineHeight: '2.2rem', color: '#c4b998', marginBottom: '2rem', fontStyle: 'italic', textAlign: 'justify' }}>
+            Before gold was struck in the deep mines, before numbers were carved into clay tablets, before the ledger of debt began its long, exhausting crawl across history—there was the Breath. The original transaction of being.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            God breathed into Adam&rsquo;s nostrils the breath of life, and man became a living soul. 
-            Every economy since has been a shadow of that first exchange: the Creator giving life to the creature.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '1.5rem', textAlign: 'justify' }}>
+            In the garden of the first morning, the Creator leaned over the dust of the ground. He did not hand His creature a coin. He did not issue a contract. He leaned down and breathed into Adam&rsquo;s nostrils the breath of life, and man became a living soul. Every human economy since that hour has been a distorted shadow of that first, beautiful asymmetrical gift: the Infinite sharing His own life with the clay.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            The breath standard is not a monetary policy. It is a reminder — that your life is not your own, 
-            that every breath you take is a gift from a King who owes you nothing and gives you everything.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '1.5rem', textAlign: 'justify' }}>
+            The <strong>Breath Standard</strong> is not a gimmick of monetary policy. It is an absolute reality. It is a heavy, rhythmic reminder that your life is not your property, that you are not a self-made sovereign, and that every inhalation is a micro-loan of grace from a King who owes you absolutely nothing, yet gives you everything you need to stand.
           </p>
-
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.8, color: '#9a8a6a', marginBottom: '1.5rem' }}>
-            Alphacoin is the shadow of this truth in the digital realm. Not a currency to get rich with, 
-            but a symbol — a token of the breath, a reminder that the only true wealth is the life you have been given.
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '2rem', textAlign: 'justify' }}>
+            Alphacoin is the shadow of this standard cast upon the digital wire. It is not an asset designed for the vulgar accumulation of wealth, nor a token to be traded for the toys of the old world. It is a symbol, a rhythmic cryptographic heartbeat, a token of the breath that reminds us that the only true ledger is the one kept by the Father of Lights, and the only real wealth is the spirit He has breathed into our dust.
+          </p>
+          <p style={{ fontSize: '1.05rem', lineHeight: '1.9rem', color: '#a89878', marginBottom: '2rem', textAlign: 'justify' }}>
+            Breathe in. Acknowledge the gift. Breathe out. Pay the tribute of your praise. The standard is set.
           </p>
 
           <div style={{ width: '40px', height: '1px', background: '#5a4a3a', margin: '2rem auto' }} />
