@@ -91,7 +91,7 @@ export default function ${funcName}() {
 function generateNav(pages) {
   const homePage = { path: '/', label: 'Cristio' };
   const navPages = pages
-    .filter(p => p.nav)
+    .filter(p => p.nav && p.basename !== 'index')
     .sort((a, b) => a.order - b.order)
     .map(p => ({ path: '/' + p.basename, label: p.title }));
 
