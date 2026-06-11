@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { loadChat, saveChat, clearChat } from './chatStore';
 
 export default function AdamChat() {
   const [open, setOpen] = useState(false);
-  const [msgs, setMsgs] = useState([]);
+  const [msgs, setMsgs] = useState(loadChat);
   const [userName, setUserName] = useState(null);
   const [showName, setShowName] = useState(false);
   const [reasoning, setReasoning] = useState('');
@@ -76,6 +77,7 @@ export default function AdamChat() {
 
   useEffect(() => {
     if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
+    saveChat(msgs);
   }, [msgs]);
 
   const send = () => {
@@ -117,7 +119,7 @@ export default function AdamChat() {
             <div ref={reasoningRef} style={{display:'none',overflow:'hidden',whiteSpace:'nowrap',flex:1,textAlign:'right',position:'relative'}}>
               <span ref={reasoningTextRef} style={{display:'inline-block',whiteSpace:'nowrap',color:'#ff6b35',fontStyle:'italic',fontSize:'0.8rem',letterSpacing:0,textTransform:'none',position:'relative'}} />
             </div>
-            <span onClick={() => { if (spinning) return; setSpinning(true); setMsgs([]); setTimeout(() => setSpinning(false), 1500); }}
+            <span onClick={() => { if (spinning) return; setSpinning(true); clearChat(); setMsgs([]); setTimeout(() => setSpinning(false), 1500); }}
               style={{cursor:'pointer',fontSize:'0.7rem',color:'#666',marginLeft:'auto',padding:'0 0.5rem',display:'inline-block',animation: spinning ? 'spin 1.5s linear' : 'none'}}>↻</span>
           </div>
           {showName && (
