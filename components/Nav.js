@@ -1,15 +1,19 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
+const navPages = [
+  {
+    "path": "/",
+    "label": "Cristio"
+  },
+  {
+    "path": "/Regnum-Unitum",
+    "label": "Regnum Unitum"
+  }
+];
+
 export default function Nav() {
   const router = useRouter();
-  const pages = [
-    { path: '/', label: 'Cristio' },
-    { path: '/regnum', label: 'Regnum Unitum' },
-    { path: '/aegis', label: 'End of Aegis' },
-    { path: '/crousia', label: 'Crousia' },
-    { path: '/the-breath', label: 'The Breath' },
-  ];
 
   return (
     <nav style={{
@@ -20,7 +24,7 @@ export default function Nav() {
       fontFamily: "'EB Garamond', Georgia, serif", fontSize: '0.8rem',
       letterSpacing: '0.12rem', textTransform: 'uppercase'
     }}>
-      {pages.map(p => (
+      {navPages.map(p => (
         <Link key={p.path} href={p.path}
           style={{
             color: router.pathname === p.path ? '#d4c4a0' : '#7a6a5a',

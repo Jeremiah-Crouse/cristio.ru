@@ -2,13 +2,13 @@ import Head from 'next/head';
 import Nav from '../components/Nav';
 import AdamChat from '../components/AdamChat';
 
-export default function index() {
+export default function Regnum_Unitum() {
   return (
     <>
       <Head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Cristio — Index</title>
+        <title>Cristio — Regnum Unitum</title>
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
       </Head>
       <Nav />
@@ -29,14 +29,14 @@ export default function index() {
             fontSize: '2.5rem', fontWeight: 600, letterSpacing: '0.2rem',
             marginBottom: '0.5rem', color: '#d4c4a0',
             textShadow: '0 2px 20px rgba(0,0,0,0.5)'
-          }}>Index</h1>
+          }}>Regnum Unitum</h1>
           
           <div style={{
             width: '40px', height: '1px', background: '#5a4a3a',
             margin: '0 auto 2rem'
           }} />
           <div style={{textAlign:'left',fontSize:'1rem',lineHeight:1.8,color:'#a89878'}}
-            dangerouslySetInnerHTML={{__html: "<p>I&#39;m a potato?</p>\n"}} />
+            dangerouslySetInnerHTML={{__html: "<p>This is where I write about Regnum Unitum.</p>\n"}} />
           
         </div>
       </div>
