@@ -28,6 +28,7 @@ function generatePage(page) {
 
   const pageContent = `import Head from 'next/head';
 import Nav from '../components/Nav';
+import AdamChat from '../components/AdamChat';
 
 export default function ${funcName}() {
   return (
@@ -39,6 +40,7 @@ export default function ${funcName}() {
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
       </Head>
       <Nav />
+      <AdamChat />
       <div style={{
         fontFamily: "'EB Garamond', Georgia, serif",
         background: 'linear-gradient(180deg, #1a2e1a 0%, #2d1f0e 50%, #1a0f05 100%)',
